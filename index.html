@@ -14,8 +14,6 @@
     --ink: #1C1A17;
     --ink-muted: #6B6860;
     --ink-faint: #B0ADA7;
-    --gold: #C9941A;
-    --gold-light: #FDF3DC;
     --teal: #1D6B5C;
     --teal-light: #E2F0ED;
     --border: rgba(28,26,23,0.12);
@@ -25,447 +23,139 @@
     --shadow-lg: 0 8px 32px rgba(28,26,23,0.12);
   }
 
-  body {
-    font-family: 'DM Sans', system-ui, sans-serif;
-    background: var(--cream);
-    color: var(--ink);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
 
-  header {
-    padding: 1.25rem 2rem;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    background: #fff;
-  }
+  header { padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.85rem; background: #fff; flex-shrink: 0; }
+  .logo-mark { width: 32px; height: 32px; background: var(--teal); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .logo-mark svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  header h1 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400; letter-spacing: -0.01em; }
+  header span { font-size: 0.78rem; color: var(--ink-muted); margin-left: 0.4rem; }
 
-  .logo-mark {
-    width: 36px;
-    height: 36px;
-    background: var(--teal);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+  .layout { display: grid; grid-template-columns: 320px 1fr; flex: 1; min-height: 0; height: calc(100vh - 56px); }
 
-  .logo-mark svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .sidebar { background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
 
-  header h1 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.2rem;
-    font-weight: 400;
-    letter-spacing: -0.01em;
-    color: var(--ink);
-  }
+  .controls { padding: 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .controls h2 { font-family: 'DM Serif Display', serif; font-size: 0.95rem; font-weight: 400; color: var(--ink); margin-bottom: 1rem; }
 
-  header span {
-    font-size: 0.8rem;
-    color: var(--ink-muted);
-    margin-left: 0.5rem;
-    font-weight: 400;
-  }
+  .field { margin-bottom: 0.85rem; }
+  .field label { display: block; font-size: 0.72rem; font-weight: 500; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.35rem; }
 
-  .layout {
-    display: grid;
-    grid-template-columns: 340px 1fr;
-    flex: 1;
-    min-height: 0;
-    height: calc(100vh - 64px);
-  }
+  .input-wrap { position: relative; }
+  .input-wrap > svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--ink-faint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+  .input-wrap input { width: 100%; padding: 0.5rem 0.65rem 0.5rem 2.1rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: inherit; font-size: 0.87rem; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.15s, background 0.15s; }
+  .input-wrap input:focus { border-color: var(--teal); background: #fff; box-shadow: 0 0 0 3px rgba(29,107,92,0.1); }
 
-  .sidebar {
-    background: #fff;
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .controls {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-  }
-
-  .controls h2 {
-    font-family: 'DM Serif Display', serif;
-    font-size: 1.05rem;
-    font-weight: 400;
-    color: var(--ink);
-    margin-bottom: 1.25rem;
-  }
-
-  .field {
-    margin-bottom: 1rem;
-  }
-
-  .field label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 500;
-    color: var(--ink-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    margin-bottom: 0.4rem;
-  }
-
-  .input-wrap {
-    position: relative;
-  }
-
-  .input-wrap svg {
-    position: absolute;
-    left: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 16px;
-    height: 16px;
-    stroke: var(--ink-faint);
-    fill: none;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    pointer-events: none;
-  }
-
-  .input-wrap input {
-    width: 100%;
-    padding: 0.55rem 0.75rem 0.55rem 2.25rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    font-family: inherit;
-    font-size: 0.9rem;
-    color: var(--ink);
-    background: var(--cream);
-    outline: none;
-    transition: border-color 0.15s, background 0.15s;
-  }
-
-  .input-wrap input:focus {
-    border-color: var(--teal);
-    background: #fff;
-    box-shadow: 0 0 0 3px rgba(29,107,92,0.1);
-  }
-
-  .autocomplete-list {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: #fff;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
-    z-index: 1000;
-    max-height: 200px;
-    overflow-y: auto;
-    display: none;
-  }
-
+  .autocomplete-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 1000; max-height: 220px; overflow-y: auto; display: none; }
   .autocomplete-list.show { display: block; }
-
-  .autocomplete-item {
-    padding: 0.6rem 0.85rem;
-    font-size: 0.87rem;
-    cursor: pointer;
-    border-bottom: 1px solid var(--border);
-    transition: background 0.1s;
-  }
-
+  .autocomplete-item { padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; display: flex; align-items: flex-start; gap: 8px; }
   .autocomplete-item:last-child { border-bottom: none; }
   .autocomplete-item:hover, .autocomplete-item.active { background: var(--teal-light); }
 
-  .autocomplete-item strong { color: var(--teal); font-weight: 500; }
-  .autocomplete-item small { color: var(--ink-muted); font-size: 0.78rem; margin-left: 4px; }
-
-  .radius-row {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 0.5rem;
-    align-items: end;
-  }
-
-  .unit-select {
-    padding: 0.55rem 0.6rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius);
-    font-family: inherit;
-    font-size: 0.87rem;
-    color: var(--ink);
-    background: var(--cream);
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    padding-right: 1.5rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6860' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 6px center;
-    transition: border-color 0.15s;
-  }
-
+  /* Radius controls */
+  .radius-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; align-items: end; }
+  .unit-select { padding: 0.5rem 1.4rem 0.5rem 0.5rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: inherit; font-size: 0.84rem; color: var(--ink); background: var(--cream); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236B6860' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 5px center; transition: border-color 0.15s; }
   .unit-select:focus { border-color: var(--teal); }
 
-  .range-wrap {
-    margin-top: 0.6rem;
-  }
+  .range-section { margin-top: 0.5rem; }
 
-  .range-wrap input[type=range] {
-    width: 100%;
-    height: 4px;
-    accent-color: var(--teal);
-    cursor: pointer;
-  }
+  /* Min/max inputs above slider */
+  .range-bounds { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .bound-input { width: 72px; padding: 0.3rem 0.4rem; border: 1px solid var(--border-strong); border-radius: 6px; font-family: inherit; font-size: 0.75rem; color: var(--ink); background: var(--cream); outline: none; text-align: center; transition: border-color 0.15s; }
+  .bound-input:focus { border-color: var(--teal); background: #fff; }
+  .bound-sep { flex: 1; height: 1px; background: var(--border); }
+  .bound-label { font-size: 0.68rem; color: var(--ink-faint); white-space: nowrap; }
 
-  .range-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.72rem;
-    color: var(--ink-faint);
-    margin-top: 4px;
-  }
+  .range-wrap { position: relative; padding: 2px 0; }
+  .range-wrap input[type=range] { width: 100%; height: 4px; accent-color: var(--teal); cursor: pointer; }
+  .range-minmax { display: flex; justify-content: space-between; margin-top: 3px; }
+  .range-minmax span { font-size: 0.68rem; color: var(--ink-faint); }
 
-  .btn-search {
-    width: 100%;
-    padding: 0.7rem;
-    background: var(--teal);
-    color: #fff;
-    border: none;
-    border-radius: var(--radius);
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 0.25rem;
-    transition: background 0.15s, transform 0.1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-
+  .btn-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-top: 0.2rem; }
+  .btn-search { padding: 0.6rem; background: var(--teal); color: #fff; border: none; border-radius: var(--radius); font-family: inherit; font-size: 0.87rem; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
   .btn-search:hover { background: #155249; }
   .btn-search:active { transform: scale(0.98); }
   .btn-search:disabled { background: var(--ink-faint); cursor: not-allowed; }
+  .btn-search svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .btn-search svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .btn-pin { padding: 0.6rem 0.75rem; background: #fff; color: var(--teal); border: 1.5px solid var(--teal); border-radius: var(--radius); font-family: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .btn-pin:hover { background: var(--teal-light); }
+  .btn-pin:active { transform: scale(0.97); }
+  .btn-pin svg { width: 14px; height: 14px; stroke: var(--teal); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
 
-  .results-header {
-    padding: 1rem 1.5rem 0.6rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-shrink: 0;
-  }
+  /* Pins list in sidebar */
+  .pins-section { border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .pins-header { padding: 0.65rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+  .pins-header h3 { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .pins-toggle { display: flex; align-items: center; gap: 6px; }
+  .pins-toggle svg { width: 13px; height: 13px; stroke: var(--ink-faint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s; }
+  .pins-toggle.open svg { transform: rotate(180deg); }
+  .pins-count { background: var(--teal); color: #fff; font-size: 0.68rem; font-weight: 500; padding: 1px 7px; border-radius: 10px; }
+  .pins-list { padding: 0 0.75rem 0.65rem; display: none; }
+  .pins-list.show { display: block; }
+  .pin-item { display: flex; align-items: center; gap: 8px; padding: 0.4rem 0.5rem; border-radius: 7px; cursor: pointer; transition: background 0.1s; margin-bottom: 2px; }
+  .pin-item:hover { background: var(--cream); }
+  .pin-item.active-pin { background: var(--teal-light); }
+  .pin-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pin-label { flex: 1; min-width: 0; }
+  .pin-name { font-size: 0.82rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pin-meta { font-size: 0.7rem; color: var(--ink-muted); margin-top: 1px; }
+  .pin-remove { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.1s; flex-shrink: 0; }
+  .pin-remove:hover { background: rgba(200,50,50,0.1); }
+  .pin-remove svg { width: 12px; height: 12px; stroke: var(--ink-faint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .pin-remove:hover svg { stroke: #c83232; }
 
-  .results-header h3 {
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--ink-muted);
-  }
+  /* Results */
+  .results-header { padding: 0.75rem 1.25rem 0.4rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .results-header h3 { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
+  .count-badge { background: var(--teal); color: #fff; font-size: 0.7rem; font-weight: 500; padding: 2px 8px; border-radius: 10px; display: none; }
+  .results-list { flex: 1; overflow-y: auto; padding: 0 0.75rem 1rem; }
+  .results-list::-webkit-scrollbar { width: 3px; }
+  .results-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
-  .count-badge {
-    background: var(--teal);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 500;
-    padding: 2px 9px;
-    border-radius: 20px;
-    display: none;
-  }
-
-  .results-list {
-    flex: 1;
-    overflow-y: auto;
-    padding: 0 0.75rem 1rem;
-  }
-
-  .results-list::-webkit-scrollbar { width: 4px; }
-  .results-list::-webkit-scrollbar-track { background: transparent; }
-  .results-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
-
-  .country-item {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.65rem 0.75rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background 0.12s;
-    border-bottom: 1px solid var(--border);
-  }
-
+  .country-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.65rem; border-radius: 7px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid var(--border); }
   .country-item:last-child { border-bottom: none; }
   .country-item:hover { background: var(--teal-light); }
-
-  .flag {
-    font-size: 1.4rem;
-    line-height: 1;
-    flex-shrink: 0;
-    width: 28px;
-    text-align: center;
-  }
-
+  .flag { font-size: 1.25rem; line-height: 1; flex-shrink: 0; width: 26px; text-align: center; }
   .country-info { flex: 1; min-width: 0; }
+  .country-name { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .country-dist { font-size: 0.72rem; color: var(--ink-muted); margin-top: 1px; }
+  .country-cont { font-size: 0.68rem; color: var(--ink-faint); background: var(--cream); padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
 
-  .country-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  .empty-state { text-align: center; padding: 2rem 1rem; color: var(--ink-faint); }
+  .empty-state svg { width: 36px; height: 36px; stroke: var(--ink-faint); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 0.6rem; }
+  .empty-state p { font-size: 0.82rem; line-height: 1.5; }
+  .empty-state p strong { display: block; color: var(--ink-muted); margin-bottom: 3px; }
 
-  .country-dist {
-    font-size: 0.76rem;
-    color: var(--ink-muted);
-    margin-top: 1px;
-  }
-
-  .country-cont {
-    font-size: 0.72rem;
-    color: var(--ink-faint);
-    background: var(--cream);
-    padding: 2px 7px;
-    border-radius: 4px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 2.5rem 1.5rem;
-    color: var(--ink-faint);
-  }
-
-  .empty-state svg {
-    width: 40px;
-    height: 40px;
-    stroke: var(--ink-faint);
-    fill: none;
-    stroke-width: 1.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    margin-bottom: 0.75rem;
-  }
-
-  .empty-state p { font-size: 0.87rem; line-height: 1.5; }
-  .empty-state p strong { display: block; color: var(--ink-muted); margin-bottom: 4px; }
-
-  .map-wrap {
-    position: relative;
-  }
-
-  #map {
-    width: 100%;
-    height: 100%;
-    background: #D6E4F0;
-  }
-
-  .map-overlay {
-    position: absolute;
-    bottom: 1rem;
-    right: 1rem;
-    z-index: 500;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-
-  .map-btn {
-    width: 36px;
-    height: 36px;
-    background: #fff;
-    border: 1px solid var(--border-strong);
-    border-radius: 8px;
-    box-shadow: var(--shadow);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.12s;
-  }
-
+  /* Map */
+  .map-wrap { position: relative; }
+  #map { width: 100%; height: 100%; background: #D6E4F0; }
+  .map-overlay { position: absolute; bottom: 1rem; right: 1rem; z-index: 500; display: flex; flex-direction: column; gap: 0.4rem; }
+  .map-btn { width: 34px; height: 34px; background: #fff; border: 1px solid var(--border-strong); border-radius: 7px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
   .map-btn:hover { background: var(--teal-light); }
-  .map-btn svg { width: 16px; height: 16px; stroke: var(--ink-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .map-btn svg { width: 15px; height: 15px; stroke: var(--ink-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
-  .loading-spinner {
-    display: none;
-    position: absolute;
-    inset: 0;
-    background: rgba(247,244,239,0.75);
-    z-index: 600;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
+  .loading-spinner { display: none; position: absolute; inset: 0; background: rgba(247,244,239,0.8); z-index: 600; align-items: center; justify-content: center; flex-direction: column; gap: 0.65rem; }
   .loading-spinner.show { display: flex; }
-
-  .spinner-ring {
-    width: 36px;
-    height: 36px;
-    border: 3px solid var(--border);
-    border-top-color: var(--teal);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
+  .spinner-ring { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-spinner p { font-size: 0.82rem; color: var(--ink-muted); }
 
-  .loading-spinner p { font-size: 0.85rem; color: var(--ink-muted); }
-
-  .toast {
-    position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(80px);
-    background: var(--ink);
-    color: #fff;
-    padding: 0.6rem 1.2rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    z-index: 9999;
-    transition: transform 0.25s ease;
-    white-space: nowrap;
-  }
-
+  .toast { position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--ink); color: #fff; padding: 0.55rem 1.1rem; border-radius: 7px; font-size: 0.82rem; z-index: 9999; transition: transform 0.22s ease; white-space: nowrap; }
   .toast.show { transform: translateX(-50%) translateY(0); }
 
-  .leaflet-popup-content-wrapper {
-    border-radius: 8px !important;
-    box-shadow: var(--shadow-lg) !important;
-    font-family: 'DM Sans', sans-serif;
-    border: 1px solid var(--border);
-  }
-
-  .popup-content { padding: 4px 2px; }
-  .popup-flag { font-size: 1.6rem; margin-bottom: 4px; display: block; }
-  .popup-name { font-weight: 500; font-size: 0.9rem; color: var(--ink); }
-  .popup-capital { font-size: 0.78rem; color: var(--ink-muted); margin-top: 2px; }
-  .popup-dist { font-size: 0.78rem; color: var(--teal); font-weight: 500; margin-top: 4px; }
+  .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: var(--shadow-lg) !important; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); }
+  .popup-content { padding: 3px 1px; }
+  .popup-flag { font-size: 1.5rem; margin-bottom: 3px; display: block; }
+  .popup-name { font-weight: 500; font-size: 0.87rem; color: var(--ink); }
+  .popup-capital { font-size: 0.75rem; color: var(--ink-muted); margin-top: 2px; }
+  .popup-dist { font-size: 0.75rem; font-weight: 500; margin-top: 3px; }
 
   @media (max-width: 768px) {
-    .layout {
-      grid-template-columns: 1fr;
-      grid-template-rows: auto 1fr;
-      height: auto;
-    }
-    .sidebar {
-      border-right: none;
-      border-bottom: 1px solid var(--border);
-    }
-    .map-wrap {
-      height: 50vh;
-    }
-    header { padding: 1rem; }
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+    .map-wrap { height: 50vh; }
+    header { padding: 0.85rem 1rem; }
   }
 </style>
 </head>
@@ -473,17 +163,15 @@
 
 <header>
   <div class="logo-mark">
-    <svg viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-    </svg>
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
   </div>
   <h1>Radius Explorer <span>— países dentro de um raio</span></h1>
 </header>
 
 <div class="layout">
-
   <aside class="sidebar">
+
+    <!-- CONTROLS -->
     <div class="controls">
       <h2>Definir área de busca</h2>
 
@@ -508,27 +196,54 @@
             <option value="mi">mi</option>
           </select>
         </div>
-        <div class="range-wrap">
-          <input type="range" id="radius-range" min="100" max="20000" step="100" value="2000" />
-          <div class="range-labels">
-            <span>100</span>
-            <span>10.000</span>
-            <span>20.000</span>
+
+        <div class="range-section">
+          <div class="range-bounds">
+            <span class="bound-label">Min</span>
+            <input type="number" class="bound-input" id="range-min" value="100" min="1" max="19999" />
+            <div class="bound-sep"></div>
+            <input type="number" class="bound-input" id="range-max" value="20000" min="2" max="40000" />
+            <span class="bound-label">Max</span>
+          </div>
+          <div class="range-wrap">
+            <input type="range" id="radius-range" min="100" max="20000" step="100" value="2000" />
+            <div class="range-minmax">
+              <span id="lbl-min">100 km</span>
+              <span id="lbl-max">20.000 km</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <button class="btn-search" id="btn-search" onclick="doSearch()">
-        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-        Buscar países
-      </button>
+      <div class="btn-row">
+        <button class="btn-search" id="btn-search" onclick="doSearch()">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          Buscar países
+        </button>
+        <button class="btn-pin" id="btn-pin" onclick="savePin()" title="Salvar como pin">
+          <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Pin
+        </button>
+      </div>
     </div>
 
+    <!-- PINS -->
+    <div class="pins-section" id="pins-section" style="display:none">
+      <div class="pins-header" onclick="togglePins()">
+        <h3>Pins salvos</h3>
+        <div class="pins-toggle" id="pins-toggle">
+          <span class="pins-count" id="pins-count">0</span>
+          <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+        </div>
+      </div>
+      <div class="pins-list" id="pins-list"></div>
+    </div>
+
+    <!-- RESULTS -->
     <div class="results-header">
-      <h3>Resultados</h3>
+      <h3 id="results-title">Resultados</h3>
       <span class="count-badge" id="count-badge">0</span>
     </div>
-
     <div class="results-list" id="results-list">
       <div class="empty-state">
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>
@@ -750,41 +465,105 @@ const COUNTRIES = [
   {name:"Zâmbia",code:"ZM",flag:"🇿🇲",capital:"Lusaka",continent:"África",lat:-13.133897,lng:27.849332},
 ];
 
+// ── PIN COLORS ──────────────────────────────────────────────────
+const PIN_COLORS = [
+  { color: '#1D6B5C', light: '#E2F0ED', name: 'verde'    },
+  { color: '#C9570A', light: '#FDEEE4', name: 'laranja'  },
+  { color: '#2563A8', light: '#E3EEFA', name: 'azul'     },
+  { color: '#8B3FAF', light: '#F3E8FB', name: 'roxo'     },
+  { color: '#B5293A', light: '#FCEAEC', name: 'vermelho' },
+  { color: '#1C7A6B', light: '#E0F2EF', name: 'esmeralda'},
+];
+
+// ── STATE ────────────────────────────────────────────────────────
 let map, originMarker, radiusCircle, countryMarkers = [];
 let originCoords = null;
 let selectedIndex = -1;
 let searchTimeout = null;
 let geocodeCache = {};
+let lastQuery = '';
 
+// Pins: [{id, label, coords, radiusKm, unit, color, mapLayers: {marker, circle, countryMarkers[]}, found:[]}]
+let pins = [];
+let activePinId = null; // which pin's countries are shown in sidebar
+
+// ── MAP INIT ─────────────────────────────────────────────────────
 map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
-
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap &copy; CARTO',
-  subdomains: 'abcd',
-  maxZoom: 19
+  attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
 }).addTo(map);
-
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-const cityInput = document.getElementById('city-input');
-const radiusInput = document.getElementById('radius-input');
-const radiusRange = document.getElementById('radius-range');
-const unitSelect = document.getElementById('unit-select');
+// ── DOM REFS ──────────────────────────────────────────────────────
+const cityInput    = document.getElementById('city-input');
+const radiusInput  = document.getElementById('radius-input');
+const radiusRange  = document.getElementById('radius-range');
+const rangeMin     = document.getElementById('range-min');
+const rangeMax     = document.getElementById('range-max');
+const lblMin       = document.getElementById('lbl-min');
+const lblMax       = document.getElementById('lbl-max');
+const unitSelect   = document.getElementById('unit-select');
 const autocompleteList = document.getElementById('autocomplete');
-const resultsList = document.getElementById('results-list');
-const countBadge = document.getElementById('count-badge');
-const loading = document.getElementById('loading');
-const btnSearch = document.getElementById('btn-search');
-const toast = document.getElementById('toast');
+const resultsList  = document.getElementById('results-list');
+const countBadge   = document.getElementById('count-badge');
+const resultsTitle = document.getElementById('results-title');
+const loading      = document.getElementById('loading');
+const btnSearch    = document.getElementById('btn-search');
+const btnPin       = document.getElementById('btn-pin');
+const toast        = document.getElementById('toast');
+const pinsSection  = document.getElementById('pins-section');
+const pinsList     = document.getElementById('pins-list');
+const pinsCount    = document.getElementById('pins-count');
+const pinsToggle   = document.getElementById('pins-toggle');
+
+// ── RANGE MIN/MAX ─────────────────────────────────────────────────
+function syncRangeLabels() {
+  const unit = unitSelect.value;
+  const minV = parseInt(rangeMin.value) || 100;
+  const maxV = parseInt(rangeMax.value) || 20000;
+  const fmt = v => unit === 'mi'
+    ? Math.round(v / 1.60934).toLocaleString('pt-BR') + ' mi'
+    : v.toLocaleString('pt-BR') + ' km';
+  lblMin.textContent = fmt(minV);
+  lblMax.textContent = fmt(maxV);
+}
+
+function applyBounds() {
+  let minV = parseInt(rangeMin.value) || 100;
+  let maxV = parseInt(rangeMax.value) || 20000;
+  if (minV < 1) minV = 1;
+  if (maxV < minV + 1) maxV = minV + 1;
+  rangeMin.value = minV;
+  rangeMax.value = maxV;
+  radiusRange.min = minV;
+  radiusRange.max = maxV;
+  // clamp current value
+  let cur = parseInt(radiusInput.value) || minV;
+  cur = Math.max(minV, Math.min(maxV, cur));
+  radiusInput.value = cur;
+  radiusRange.value = cur;
+  syncRangeLabels();
+}
+
+rangeMin.addEventListener('change', applyBounds);
+rangeMax.addEventListener('change', applyBounds);
+rangeMin.addEventListener('blur', applyBounds);
+rangeMax.addEventListener('blur', applyBounds);
 
 radiusRange.addEventListener('input', () => {
   radiusInput.value = radiusRange.value;
 });
 radiusInput.addEventListener('input', () => {
-  const v = Math.min(20000, Math.max(100, parseInt(radiusInput.value) || 100));
+  const minV = parseInt(rangeMin.value) || 100;
+  const maxV = parseInt(rangeMax.value) || 20000;
+  const v = Math.min(maxV, Math.max(minV, parseInt(radiusInput.value) || minV));
   radiusRange.value = v;
 });
 
+unitSelect.addEventListener('change', () => { syncRangeLabels(); });
+syncRangeLabels();
+
+// ── AUTOCOMPLETE ──────────────────────────────────────────────────
 cityInput.addEventListener('input', () => {
   originCoords = null;
   clearTimeout(searchTimeout);
@@ -797,15 +576,14 @@ cityInput.addEventListener('keydown', (e) => {
   const items = autocompleteList.querySelectorAll('.autocomplete-item');
   if (e.key === 'ArrowDown') { selectedIndex = Math.min(selectedIndex + 1, items.length - 1); updateActive(items); e.preventDefault(); }
   else if (e.key === 'ArrowUp') { selectedIndex = Math.max(selectedIndex - 1, 0); updateActive(items); e.preventDefault(); }
-  else if (e.key === 'Enter') {
-    if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
-    else doSearch();
-  }
+  else if (e.key === 'Enter') { if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click(); else doSearch(); }
   else if (e.key === 'Escape') closeAutocomplete();
 });
 
-document.addEventListener('click', (e) => {
-  if (!e.target.closest('.input-wrap')) closeAutocomplete();
+cityInput.addEventListener('blur', () => { setTimeout(closeAutocomplete, 150); });
+cityInput.addEventListener('focus', () => {
+  const q = cityInput.value.trim();
+  if (q.length >= 3 && autocompleteList.children.length) autocompleteList.classList.add('show');
 });
 
 function updateActive(items) {
@@ -813,34 +591,92 @@ function updateActive(items) {
 }
 
 async function fetchSuggestions(q) {
+  lastQuery = q;
+  showAutocompleteSkeleton();
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+    const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=pt`);
+    if (!res.ok) throw new Error();
     const data = await res.json();
+    if (q !== lastQuery) return;
+    const features = (data.features || []).filter(f => {
+      const t = f.properties.type || '';
+      return ['city','town','village','municipality','borough','suburb','county','district'].includes(t);
+    });
+    if (!features.length) { await fetchSuggestionsNominatim(q); return; }
+    showAutocompletePhoton(features);
+  } catch {
+    if (q !== lastQuery) return;
+    await fetchSuggestionsNominatim(q);
+  }
+}
+
+async function fetchSuggestionsNominatim(q) {
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&accept-language=pt-BR`, { headers: { 'Accept-Language': 'pt-BR' } });
+    const data = await res.json();
+    if (q !== lastQuery) return;
     if (!data.length) { closeAutocomplete(); return; }
-    showAutocomplete(data);
+    showAutocompleteNominatim(data);
   } catch { closeAutocomplete(); }
 }
 
-function showAutocomplete(results) {
+function showAutocompleteSkeleton() {
+  autocompleteList.innerHTML = `<div style="padding:0.65rem 0.9rem;font-size:0.8rem;color:var(--ink-faint);display:flex;align-items:center;gap:8px">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+    Buscando cidades…</div>`;
+  autocompleteList.classList.add('show');
+}
+
+function buildItem(name, subtitle, lat, lng) {
+  const div = document.createElement('div');
+  div.className = 'autocomplete-item';
+  div.innerHTML = `
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+    </svg>
+    <div style="min-width:0">
+      <div style="font-weight:500;color:var(--ink);font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+      <div style="font-size:0.72rem;color:var(--ink-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${subtitle}</div>
+    </div>`;
+  div.addEventListener('mousedown', e => e.preventDefault());
+  div.addEventListener('click', () => {
+    cityInput.value = name + (subtitle ? `, ${subtitle.split(',')[0]}` : '');
+    originCoords = { lat, lng };
+    geocodeCache[cityInput.value] = originCoords;
+    closeAutocomplete();
+    doSearch();
+  });
+  return div;
+}
+
+function showAutocompletePhoton(features) {
   selectedIndex = -1;
   autocompleteList.innerHTML = '';
+  const seen = new Set();
+  features.forEach(f => {
+    const p = f.properties;
+    const name = p.name || p.city || ''; if (!name) return;
+    const subtitle = [p.state, p.country].filter(Boolean).join(', ');
+    const key = `${name}|${subtitle}`; if (seen.has(key)) return; seen.add(key);
+    const [lng, lat] = f.geometry.coordinates;
+    autocompleteList.appendChild(buildItem(name, subtitle, lat, lng));
+  });
+  if (!autocompleteList.children.length) { closeAutocomplete(); return; }
+  autocompleteList.classList.add('show');
+}
+
+function showAutocompleteNominatim(results) {
+  selectedIndex = -1;
+  autocompleteList.innerHTML = '';
+  const seen = new Set();
   results.forEach(r => {
     const city = r.address.city || r.address.town || r.address.village || r.address.municipality || r.name;
-    const country = r.address.country || '';
-    const display = city ? `${city}` : r.display_name.split(',')[0];
-    const div = document.createElement('div');
-    div.className = 'autocomplete-item';
-    div.innerHTML = `<strong>${display}</strong><small>${country}</small>`;
-    div.addEventListener('click', () => {
-      cityInput.value = r.display_name.split(',')[0] + (country ? `, ${country}` : '');
-      originCoords = { lat: parseFloat(r.lat), lng: parseFloat(r.lon) };
-      geocodeCache[cityInput.value] = originCoords;
-      closeAutocomplete();
-      doSearch();
-    });
-    autocompleteList.appendChild(div);
+    if (!city) return;
+    const subtitle = [r.address.state, r.address.country].filter(Boolean).join(', ');
+    const key = `${city}|${subtitle}`; if (seen.has(key)) return; seen.add(key);
+    autocompleteList.appendChild(buildItem(city, subtitle, parseFloat(r.lat), parseFloat(r.lon)));
   });
+  if (!autocompleteList.children.length) { closeAutocomplete(); return; }
   autocompleteList.classList.add('show');
 }
 
@@ -850,10 +686,10 @@ function closeAutocomplete() {
   selectedIndex = -1;
 }
 
+// ── GEOCODE ───────────────────────────────────────────────────────
 async function geocodeCity(name) {
   if (geocodeCache[name]) return geocodeCache[name];
-  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`;
-  const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`, { headers: { 'Accept-Language': 'pt-BR' } });
   const data = await res.json();
   if (!data.length) return null;
   const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
@@ -861,17 +697,15 @@ async function geocodeCity(name) {
   return coords;
 }
 
+// ── HELPERS ───────────────────────────────────────────────────────
 function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function showToast(msg) {
-  toast.textContent = msg;
-  toast.classList.add('show');
+  toast.textContent = msg; toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 3000);
 }
 
@@ -880,6 +714,7 @@ function setLoading(show, msg='Buscando localização…') {
   loading.classList.toggle('show', show);
 }
 
+// ── MAIN SEARCH ───────────────────────────────────────────────────
 async function doSearch() {
   const cityName = cityInput.value.trim();
   if (!cityName) { showToast('Informe uma cidade de origem'); return; }
@@ -896,62 +731,50 @@ async function doSearch() {
       if (!originCoords) { showToast('Cidade não encontrada. Tente outro nome.'); return; }
     }
 
-    clearMapLayers();
+    clearCurrentLayers();
+
+    const col = PIN_COLORS[0]; // preview uses teal
 
     originMarker = L.marker([originCoords.lat, originCoords.lng], {
       icon: L.divIcon({
         className: '',
-        html: `<div style="width:14px;height:14px;background:#1D6B5C;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
-        iconSize: [14,14], iconAnchor: [7,7]
+        html: `<div style="width:13px;height:13px;background:${col.color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
+        iconSize:[13,13], iconAnchor:[6,6]
       })
-    }).addTo(map).bindPopup(`<div class="popup-content"><p class="popup-name">📍 ${cityName}</p><p class="popup-dist" style="color:#6B6860">Origem da busca</p></div>`);
+    }).addTo(map).bindPopup(`<div class="popup-content"><p class="popup-name">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Prévia — salve como pin para fixar</p></div>`);
 
     radiusCircle = L.circle([originCoords.lat, originCoords.lng], {
-      radius: radiusKm * 1000,
-      color: '#1D6B5C',
-      fillColor: '#1D6B5C',
-      fillOpacity: 0.06,
-      weight: 2,
-      dashArray: '6 4'
+      radius: radiusKm*1000, color: col.color, fillColor: col.color,
+      fillOpacity: 0.06, weight: 2, dashArray: '6 4'
     }).addTo(map);
 
     const found = COUNTRIES
       .map(c => ({ ...c, dist: Math.round(haversine(originCoords.lat, originCoords.lng, c.lat, c.lng)) }))
       .filter(c => c.dist <= radiusKm)
-      .sort((a, b) => a.dist - b.dist);
+      .sort((a,b) => a.dist - b.dist);
 
     found.forEach(c => {
-      const distLabel = unitSelect.value === 'mi' ? `${Math.round(c.dist / 1.60934)} mi` : `${c.dist} km`;
-      const marker = L.marker([c.lat, c.lng], {
+      const distLabel = unitSelect.value === 'mi' ? `${Math.round(c.dist/1.60934)} mi` : `${c.dist} km`;
+      const m = L.marker([c.lat,c.lng], {
         icon: L.divIcon({
           className: '',
-          html: `<div style="background:#fff;border:2px solid #1D6B5C;border-radius:20px;padding:1px 7px;font-size:12px;white-space:nowrap;font-family:DM Sans,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.15);color:#1C1A17;font-weight:500">${c.flag} ${c.name}</div>`,
-          iconAnchor: [0, 8]
+          html: `<div style="background:#fff;border:2px solid ${col.color};border-radius:20px;padding:1px 7px;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.13);color:#1C1A17;font-weight:500">${c.flag} ${c.name}</div>`,
+          iconAnchor:[0,8]
         })
       }).addTo(map);
-
-      marker.bindPopup(`
-        <div class="popup-content">
-          <span class="popup-flag">${c.flag}</span>
-          <p class="popup-name">${c.name}</p>
-          <p class="popup-capital">Capital: ${c.capital}</p>
-          <p class="popup-dist">${distLabel} de ${cityName}</p>
-        </div>
-      `);
-
-      countryMarkers.push(marker);
+      m.bindPopup(`<div class="popup-content"><span class="popup-flag">${c.flag}</span><p class="popup-name">${c.name}</p><p class="popup-capital">Capital: ${c.capital}</p><p class="popup-dist" style="color:${col.color}">${distLabel} de ${cityName}</p></div>`);
+      countryMarkers.push(m);
     });
 
-    const bounds = radiusCircle.getBounds();
-    map.fitBounds(bounds, { padding: [40, 40] });
-
-    renderList(found, cityName);
+    map.fitBounds(radiusCircle.getBounds(), { padding:[40,40] });
+    activePinId = null;
+    renderCountryList(found, cityName, null);
     countBadge.textContent = found.length;
     countBadge.style.display = found.length ? 'inline-block' : 'none';
-
+    resultsTitle.textContent = 'Resultados';
     if (!found.length) showToast('Nenhum país encontrado nesse raio.');
 
-  } catch (err) {
+  } catch(err) {
     showToast('Erro ao buscar. Verifique sua conexão.');
     console.error(err);
   } finally {
@@ -960,17 +783,173 @@ async function doSearch() {
   }
 }
 
-function renderList(countries, cityName) {
+function clearCurrentLayers() {
+  if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
+  if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+  countryMarkers.forEach(m => map.removeLayer(m));
+  countryMarkers = [];
+}
+
+// ── PINS ──────────────────────────────────────────────────────────
+function nextPinColor() {
+  return PIN_COLORS[pins.length % PIN_COLORS.length];
+}
+
+async function savePin() {
+  const cityName = cityInput.value.trim();
+  if (!cityName) { showToast('Informe uma cidade primeiro'); return; }
+
+  let radiusKm = parseInt(radiusInput.value) || 2000;
+  const unit = unitSelect.value;
+  if (unit === 'mi') radiusKm = Math.round(radiusKm * 1.60934);
+
+  btnPin.disabled = true;
+  setLoading(true, originCoords ? 'Salvando pin…' : 'Buscando localização…');
+
+  try {
+    if (!originCoords) {
+      originCoords = await geocodeCity(cityName);
+      if (!originCoords) { showToast('Cidade não encontrada.'); return; }
+    }
+
+    const col = nextPinColor();
+    const id = Date.now();
+    const coords = { ...originCoords };
+
+    // Build map layers for this pin
+    const pinOriginMarker = L.marker([coords.lat, coords.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="width:14px;height:14px;background:${col.color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
+        iconSize:[14,14], iconAnchor:[7,7]
+      })
+    }).addTo(map);
+    pinOriginMarker.bindPopup(`<div class="popup-content"><p class="popup-name" style="color:${col.color}">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Pin salvo · ${radiusKm} km</p></div>`);
+
+    const pinCircle = L.circle([coords.lat, coords.lng], {
+      radius: radiusKm*1000, color: col.color, fillColor: col.color,
+      fillOpacity: 0.07, weight: 2, dashArray: '5 4'
+    }).addTo(map);
+
+    const found = COUNTRIES
+      .map(c => ({ ...c, dist: Math.round(haversine(coords.lat, coords.lng, c.lat, c.lng)) }))
+      .filter(c => c.dist <= radiusKm)
+      .sort((a,b) => a.dist - b.dist);
+
+    const pinCountryMarkers = [];
+    found.forEach(c => {
+      const distLabel = unit === 'mi' ? `${Math.round(c.dist/1.60934)} mi` : `${c.dist} km`;
+      const m = L.marker([c.lat,c.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div style="background:#fff;border:2px solid ${col.color};border-radius:20px;padding:1px 7px;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.13);color:#1C1A17;font-weight:500">${c.flag} ${c.name}</div>`,
+          iconAnchor:[0,8]
+        })
+      }).addTo(map);
+      m.bindPopup(`<div class="popup-content"><span class="popup-flag">${c.flag}</span><p class="popup-name">${c.name}</p><p class="popup-capital">Capital: ${c.capital}</p><p class="popup-dist" style="color:${col.color}">${distLabel} de ${cityName}</p></div>`);
+      pinCountryMarkers.push(m);
+    });
+
+    // Remove preview layers (they're now replaced by pin layers)
+    clearCurrentLayers();
+
+    const pin = { id, label: cityName, coords, radiusKm, unit, color: col.color, lightColor: col.light,
+      mapLayers: { marker: pinOriginMarker, circle: pinCircle, countryMarkers: pinCountryMarkers }, found };
+    pins.push(pin);
+
+    // Show in sidebar
+    activePinId = id;
+    renderCountryList(found, cityName, col.color);
+    countBadge.textContent = found.length;
+    countBadge.style.display = found.length ? 'inline-block' : 'none';
+    resultsTitle.textContent = `${cityName}`;
+
+    renderPinsList();
+    map.fitBounds(pinCircle.getBounds(), { padding:[40,40] });
+    showToast(`Pin "${cityName}" salvo!`);
+
+  } catch(err) {
+    showToast('Erro ao salvar pin.'); console.error(err);
+  } finally {
+    btnPin.disabled = false;
+    setLoading(false);
+  }
+}
+
+function removePin(id, e) {
+  e.stopPropagation();
+  const idx = pins.findIndex(p => p.id === id);
+  if (idx < 0) return;
+  const pin = pins[idx];
+  map.removeLayer(pin.mapLayers.marker);
+  map.removeLayer(pin.mapLayers.circle);
+  pin.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
+  pins.splice(idx, 1);
+  if (activePinId === id) {
+    activePinId = null;
+    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Pin removido</strong>Faça uma busca ou salve um novo pin.</p></div>`;
+    countBadge.style.display = 'none';
+    resultsTitle.textContent = 'Resultados';
+  }
+  renderPinsList();
+}
+
+function focusPin(id) {
+  const pin = pins.find(p => p.id === id);
+  if (!pin) return;
+  activePinId = id;
+  renderCountryList(pin.found, pin.label, pin.color);
+  countBadge.textContent = pin.found.length;
+  countBadge.style.display = pin.found.length ? 'inline-block' : 'none';
+  resultsTitle.textContent = pin.label;
+  map.fitBounds(pin.mapLayers.circle.getBounds(), { padding:[40,40] });
+  renderPinsList();
+}
+
+function renderPinsList() {
+  const hasPins = pins.length > 0;
+  pinsSection.style.display = hasPins ? 'block' : 'none';
+  pinsCount.textContent = pins.length;
+
+  pinsList.innerHTML = pins.map(p => {
+    const radiusLabel = p.unit === 'mi'
+      ? `${Math.round(p.radiusKm/1.60934).toLocaleString('pt-BR')} mi`
+      : `${p.radiusKm.toLocaleString('pt-BR')} km`;
+    const isActive = activePinId === p.id;
+    return `<div class="pin-item ${isActive ? 'active-pin' : ''}" onclick="focusPin(${p.id})">
+      <div class="pin-dot" style="background:${p.color}"></div>
+      <div class="pin-label">
+        <div class="pin-name">${p.label}</div>
+        <div class="pin-meta">${radiusLabel} · ${p.found.length} países</div>
+      </div>
+      <div class="pin-remove" onclick="removePin(${p.id},event)" title="Remover pin">
+        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePins() {
+  const list = document.getElementById('pins-list');
+  const toggle = document.getElementById('pins-toggle');
+  list.classList.toggle('show');
+  toggle.classList.toggle('open');
+}
+
+// ── COUNTRY LIST RENDER ───────────────────────────────────────────
+function renderCountryList(countries, cityName, accentColor) {
   if (!countries.length) {
     resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Tente aumentar o raio ou escolher outra cidade.</p></div>`;
     return;
   }
-
   const unit = unitSelect.value;
+  const activePin = activePinId ? pins.find(p => p.id === activePinId) : null;
+  const pinUnit = activePin ? activePin.unit : unit;
   resultsList.innerHTML = countries.map((c, i) => {
-    const distKm = c.dist;
-    const distLabel = unit === 'mi' ? `${Math.round(distKm / 1.60934).toLocaleString('pt-BR')} mi` : `${distKm.toLocaleString('pt-BR')} km`;
-    return `<div class="country-item" onclick="focusCountry(${i})" title="${c.name}">
+    const distLabel = pinUnit === 'mi'
+      ? `${Math.round(c.dist/1.60934).toLocaleString('pt-BR')} mi`
+      : `${c.dist.toLocaleString('pt-BR')} km`;
+    return `<div class="country-item" onclick="focusCountryOnMap(${i})" title="${c.name}">
       <span class="flag">${c.flag}</span>
       <div class="country-info">
         <div class="country-name">${c.name}</div>
@@ -981,42 +960,45 @@ function renderList(countries, cityName) {
   }).join('');
 }
 
-let currentFound = [];
-function focusCountry(i) {
-  if (!countryMarkers[i]) return;
-  map.setView(countryMarkers[i].getLatLng(), 5, { animate: true });
-  countryMarkers[i].openPopup();
+function focusCountryOnMap(i) {
+  // Determine which markers to use: active pin or preview
+  const activePin = activePinId ? pins.find(p => p.id === activePinId) : null;
+  const markers = activePin ? activePin.mapLayers.countryMarkers : countryMarkers;
+  if (!markers[i]) return;
+  map.setView(markers[i].getLatLng(), 5, { animate: true });
+  markers[i].openPopup();
 }
 
-const origDoSearch = doSearch;
-window.doSearch = async function() {
-  await origDoSearch();
-  currentFound = [];
-}
-
-function clearMapLayers() {
-  if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
-  if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
-  countryMarkers.forEach(m => map.removeLayer(m));
-  countryMarkers = [];
-}
-
+// ── RESET ─────────────────────────────────────────────────────────
 function resetMap() {
-  clearMapLayers();
+  clearCurrentLayers();
+  // Remove all pins from map
+  pins.forEach(p => {
+    map.removeLayer(p.mapLayers.marker);
+    map.removeLayer(p.mapLayers.circle);
+    p.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
+  });
+  pins = [];
+  activePinId = null;
   originCoords = null;
   cityInput.value = '';
   radiusInput.value = '2000';
   radiusRange.value = '2000';
   resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e um raio para ver os países próximos.</p></div>`;
   countBadge.style.display = 'none';
+  resultsTitle.textContent = 'Resultados';
+  pinsSection.style.display = 'none';
   map.setView([20, 0], 2);
 }
 
-window.focusCountry = focusCountry;
+// ── GLOBALS ───────────────────────────────────────────────────────
+window.doSearch = doSearch;
+window.savePin = savePin;
+window.focusPin = focusPin;
+window.removePin = removePin;
+window.togglePins = togglePins;
 window.resetMap = resetMap;
-window.doSearch = async function() {
-  await origDoSearch();
-}
+window.focusCountryOnMap = focusCountryOnMap;
 </script>
 </body>
 </html>
