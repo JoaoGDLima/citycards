@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radius Explorer — Países ao redor do mundo</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F7F4EF;
+    --ink: #1C1A17;
+    --ink-muted: #6B6860;
+    --ink-faint: #B0ADA7;
+    --gold: #C9941A;
+    --gold-light: #FDF3DC;
+    --teal: #1D6B5C;
+    --teal-light: #E2F0ED;
+    --border: rgba(28,26,23,0.12);
+    --border-strong: rgba(28,26,23,0.25);
+    --radius: 10px;
+    --shadow: 0 2px 12px rgba(28,26,23,0.08);
+    --shadow-lg: 0 8px 32px rgba(28,26,23,0.12);
+  }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #fff;
+  }
+
+  .logo-mark {
+    width: 36px;
+    height: 36px;
+    background: var(--teal);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg { width: 20px; height: 20px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  header span {
+    font-size: 0.8rem;
+    color: var(--ink-muted);
+    margin-left: 0.5rem;
+    font-weight: 400;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    flex: 1;
+    min-height: 0;
+    height: calc(100vh - 64px);
+  }
+
+  .sidebar {
+    background: #fff;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .controls {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .controls h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.05rem;
+    font-weight: 400;
+    color: var(--ink);
+    margin-bottom: 1.25rem;
+  }
+
+  .field {
+    margin-bottom: 1rem;
+  }
+
+  .field label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--ink-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.4rem;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-wrap svg {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    stroke: var(--ink-faint);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    padding: 0.55rem 0.75rem 0.55rem 2.25rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--ink);
+    background: var(--cream);
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .input-wrap input:focus {
+    border-color: var(--teal);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(29,107,92,0.1);
+  }
+
+  .autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .autocomplete-list.show { display: block; }
+
+  .autocomplete-item {
+    padding: 0.6rem 0.85rem;
+    font-size: 0.87rem;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover, .autocomplete-item.active { background: var(--teal-light); }
+
+  .autocomplete-item strong { color: var(--teal); font-weight: 500; }
+  .autocomplete-item small { color: var(--ink-muted); font-size: 0.78rem; margin-left: 4px; }
+
+  .radius-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.5rem;
+    align-items: end;
+  }
+
+  .unit-select {
+    padding: 0.55rem 0.6rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.87rem;
+    color: var(--ink);
+    background: var(--cream);
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    padding-right: 1.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6860' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 6px center;
+    transition: border-color 0.15s;
+  }
+
+  .unit-select:focus { border-color: var(--teal); }
+
+  .range-wrap {
+    margin-top: 0.6rem;
+  }
+
+  .range-wrap input[type=range] {
+    width: 100%;
+    height: 4px;
+    accent-color: var(--teal);
+    cursor: pointer;
+  }
+
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  .btn-search {
+    width: 100%;
+    padding: 0.7rem;
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 0.25rem;
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .btn-search:hover { background: #155249; }
+  .btn-search:active { transform: scale(0.98); }
+  .btn-search:disabled { background: var(--ink-faint); cursor: not-allowed; }
+
+  .btn-search svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .results-header {
+    padding: 1rem 1.5rem 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .results-header h3 {
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+
+  .count-badge {
+    background: var(--teal);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 2px 9px;
+    border-radius: 20px;
+    display: none;
+  }
+
+  .results-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 0.75rem 1rem;
+  }
+
+  .results-list::-webkit-scrollbar { width: 4px; }
+  .results-list::-webkit-scrollbar-track { background: transparent; }
+  .results-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+  .country-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.12s;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .country-item:last-child { border-bottom: none; }
+  .country-item:hover { background: var(--teal-light); }
+
+  .flag {
+    font-size: 1.4rem;
+    line-height: 1;
+    flex-shrink: 0;
+    width: 28px;
+    text-align: center;
+  }
+
+  .country-info { flex: 1; min-width: 0; }
+
+  .country-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .country-dist {
+    font-size: 0.76rem;
+    color: var(--ink-muted);
+    margin-top: 1px;
+  }
+
+  .country-cont {
+    font-size: 0.72rem;
+    color: var(--ink-faint);
+    background: var(--cream);
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    color: var(--ink-faint);
+  }
+
+  .empty-state svg {
+    width: 40px;
+    height: 40px;
+    stroke: var(--ink-faint);
+    fill: none;
+    stroke-width: 1.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    margin-bottom: 0.75rem;
+  }
+
+  .empty-state p { font-size: 0.87rem; line-height: 1.5; }
+  .empty-state p strong { display: block; color: var(--ink-muted); margin-bottom: 4px; }
+
+  .map-wrap {
+    position: relative;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    background: #D6E4F0;
+  }
+
+  .map-overlay {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .map-btn {
+    width: 36px;
+    height: 36px;
+    background: #fff;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s;
+  }
+
+  .map-btn:hover { background: var(--teal-light); }
+  .map-btn svg { width: 16px; height: 16px; stroke: var(--ink-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  .loading-spinner {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(247,244,239,0.75);
+    z-index: 600;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .loading-spinner.show { display: flex; }
+
+  .spinner-ring {
+    width: 36px;
+    height: 36px;
+    border: 3px solid var(--border);
+    border-top-color: var(--teal);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-spinner p { font-size: 0.85rem; color: var(--ink-muted); }
+
+  .toast {
+    position: fixed;
+    bottom: 1.5rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--ink);
+    color: #fff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    z-index: 9999;
+    transition: transform 0.25s ease;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 8px !important;
+    box-shadow: var(--shadow-lg) !important;
+    font-family: 'DM Sans', sans-serif;
+    border: 1px solid var(--border);
+  }
+
+  .popup-content { padding: 4px 2px; }
+  .popup-flag { font-size: 1.6rem; margin-bottom: 4px; display: block; }
+  .popup-name { font-weight: 500; font-size: 0.9rem; color: var(--ink); }
+  .popup-capital { font-size: 0.78rem; color: var(--ink-muted); margin-top: 2px; }
+  .popup-dist { font-size: 0.78rem; color: var(--teal); font-weight: 500; margin-top: 4px; }
+
+  @media (max-width: 768px) {
+    .layout {
+      grid-template-columns: 1fr;
+      grid-template-rows: auto 1fr;
+      height: auto;
+    }
+    .sidebar {
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    .map-wrap {
+      height: 50vh;
+    }
+    header { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10"/>
+      <path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  </div>
+  <h1>Radius Explorer <span>— países dentro de um raio</span></h1>
+</header>
+
+<div class="layout">
+
+  <aside class="sidebar">
+    <div class="controls">
+      <h2>Definir área de busca</h2>
+
+      <div class="field">
+        <label>Cidade de origem</label>
+        <div class="input-wrap" style="position:relative">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <input type="text" id="city-input" placeholder="Ex: São Paulo, Brasil" autocomplete="off" />
+          <div class="autocomplete-list" id="autocomplete"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Raio de distância</label>
+        <div class="radius-row">
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <input type="number" id="radius-input" value="2000" min="100" max="20000" placeholder="2000" />
+          </div>
+          <select class="unit-select" id="unit-select">
+            <option value="km">km</option>
+            <option value="mi">mi</option>
+          </select>
+        </div>
+        <div class="range-wrap">
+          <input type="range" id="radius-range" min="100" max="20000" step="100" value="2000" />
+          <div class="range-labels">
+            <span>100</span>
+            <span>10.000</span>
+            <span>20.000</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-search" id="btn-search" onclick="doSearch()">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Buscar países
+      </button>
+    </div>
+
+    <div class="results-header">
+      <h3>Resultados</h3>
+      <span class="count-badge" id="count-badge">0</span>
+    </div>
+
+    <div class="results-list" id="results-list">
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>
+        <p><strong>Nenhuma busca realizada</strong>Insira uma cidade e um raio para ver os países próximos.</p>
+      </div>
+    </div>
+  </aside>
+
+  <div class="map-wrap">
+    <div class="loading-spinner" id="loading">
+      <div class="spinner-ring"></div>
+      <p>Buscando localização…</p>
+    </div>
+    <div id="map"></div>
+    <div class="map-overlay">
+      <button class="map-btn" title="Resetar mapa" onclick="resetMap()">
+        <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const COUNTRIES = [
+  {name:"Afeganistão",code:"AF",flag:"🇦🇫",capital:"Cabul",continent:"Ásia",lat:33.93911,lng:67.709953},
+  {name:"África do Sul",code:"ZA",flag:"🇿🇦",capital:"Pretória",continent:"África",lat:-30.559482,lng:22.937506},
+  {name:"Albânia",code:"AL",flag:"🇦🇱",capital:"Tirana",continent:"Europa",lat:41.153332,lng:20.168331},
+  {name:"Alemanha",code:"DE",flag:"🇩🇪",capital:"Berlim",continent:"Europa",lat:51.165691,lng:10.451526},
+  {name:"Andorra",code:"AD",flag:"🇦🇩",capital:"Andorra la Vella",continent:"Europa",lat:42.546245,lng:1.601554},
+  {name:"Angola",code:"AO",flag:"🇦🇴",capital:"Luanda",continent:"África",lat:-11.202692,lng:17.873887},
+  {name:"Antígua e Barbuda",code:"AG",flag:"🇦🇬",capital:"Saint John's",continent:"América",lat:17.060816,lng:-61.796428},
+  {name:"Arábia Saudita",code:"SA",flag:"🇸🇦",capital:"Riade",continent:"Ásia",lat:23.885942,lng:45.079162},
+  {name:"Argélia",code:"DZ",flag:"🇩🇿",capital:"Argel",continent:"África",lat:28.033886,lng:1.659626},
+  {name:"Argentina",code:"AR",flag:"🇦🇷",capital:"Buenos Aires",continent:"América",lat:-38.416097,lng:-63.616672},
+  {name:"Armênia",code:"AM",flag:"🇦🇲",capital:"Yerevan",continent:"Ásia",lat:40.069099,lng:45.038189},
+  {name:"Austrália",code:"AU",flag:"🇦🇺",capital:"Camberra",continent:"Oceania",lat:-25.274398,lng:133.775136},
+  {name:"Áustria",code:"AT",flag:"🇦🇹",capital:"Viena",continent:"Europa",lat:47.516231,lng:14.550072},
+  {name:"Azerbaijão",code:"AZ",flag:"🇦🇿",capital:"Baku",continent:"Ásia",lat:40.143105,lng:47.576927},
+  {name:"Bahamas",code:"BS",flag:"🇧🇸",capital:"Nassau",continent:"América",lat:25.03428,lng:-77.39628},
+  {name:"Bahrein",code:"BH",flag:"🇧🇭",capital:"Manama",continent:"Ásia",lat:25.930414,lng:50.637772},
+  {name:"Bangladesh",code:"BD",flag:"🇧🇩",capital:"Daca",continent:"Ásia",lat:23.684994,lng:90.356331},
+  {name:"Barbados",code:"BB",flag:"🇧🇧",capital:"Bridgetown",continent:"América",lat:13.193887,lng:-59.543198},
+  {name:"Bielorrússia",code:"BY",flag:"🇧🇾",capital:"Minsk",continent:"Europa",lat:53.709807,lng:27.953389},
+  {name:"Bélgica",code:"BE",flag:"🇧🇪",capital:"Bruxelas",continent:"Europa",lat:50.503887,lng:4.469936},
+  {name:"Belize",code:"BZ",flag:"🇧🇿",capital:"Belmopan",continent:"América",lat:17.189877,lng:-88.49765},
+  {name:"Benin",code:"BJ",flag:"🇧🇯",capital:"Porto-Novo",continent:"África",lat:9.30769,lng:2.315834},
+  {name:"Bolívia",code:"BO",flag:"🇧🇴",capital:"Sucre",continent:"América",lat:-16.290154,lng:-63.588653},
+  {name:"Bósnia e Herzegovina",code:"BA",flag:"🇧🇦",capital:"Sarajevo",continent:"Europa",lat:43.915886,lng:17.679076},
+  {name:"Botswana",code:"BW",flag:"🇧🇼",capital:"Gaborone",continent:"África",lat:-22.328474,lng:24.684866},
+  {name:"Brasil",code:"BR",flag:"🇧🇷",capital:"Brasília",continent:"América",lat:-14.235004,lng:-51.92528},
+  {name:"Brunei",code:"BN",flag:"🇧🇳",capital:"Bandar Seri Begawan",continent:"Ásia",lat:4.535277,lng:114.727669},
+  {name:"Bulgária",code:"BG",flag:"🇧🇬",capital:"Sofia",continent:"Europa",lat:42.733883,lng:25.48583},
+  {name:"Burkina Faso",code:"BF",flag:"🇧🇫",capital:"Ouagadougou",continent:"África",lat:12.364566,lng:-1.561593},
+  {name:"Burundi",code:"BI",flag:"🇧🇮",capital:"Gitega",continent:"África",lat:-3.373056,lng:29.918886},
+  {name:"Butão",code:"BT",flag:"🇧🇹",capital:"Thimphu",continent:"Ásia",lat:27.514162,lng:90.433601},
+  {name:"Cabo Verde",code:"CV",flag:"🇨🇻",capital:"Praia",continent:"África",lat:16.002082,lng:-24.013197},
+  {name:"Camarões",code:"CM",flag:"🇨🇲",capital:"Yaoundé",continent:"África",lat:3.848033,lng:11.502075},
+  {name:"Camboja",code:"KH",flag:"🇰🇭",capital:"Phnom Penh",continent:"Ásia",lat:12.565679,lng:104.990963},
+  {name:"Canadá",code:"CA",flag:"🇨🇦",capital:"Ottawa",continent:"América",lat:56.130366,lng:-106.346771},
+  {name:"Catar",code:"QA",flag:"🇶🇦",capital:"Doha",continent:"Ásia",lat:25.354826,lng:51.183884},
+  {name:"Cazaquistão",code:"KZ",flag:"🇰🇿",capital:"Astana",continent:"Ásia",lat:48.019573,lng:66.923684},
+  {name:"Chade",code:"TD",flag:"🇹🇩",capital:"N'Djamena",continent:"África",lat:15.454166,lng:18.732207},
+  {name:"Chile",code:"CL",flag:"🇨🇱",capital:"Santiago",continent:"América",lat:-35.675147,lng:-71.542969},
+  {name:"China",code:"CN",flag:"🇨🇳",capital:"Pequim",continent:"Ásia",lat:35.86166,lng:104.195397},
+  {name:"Chipre",code:"CY",flag:"🇨🇾",capital:"Nicosia",continent:"Europa",lat:35.126413,lng:33.429859},
+  {name:"Colômbia",code:"CO",flag:"🇨🇴",capital:"Bogotá",continent:"América",lat:4.570868,lng:-74.297333},
+  {name:"Comores",code:"KM",flag:"🇰🇲",capital:"Moroni",continent:"África",lat:-11.875001,lng:43.872219},
+  {name:"Congo",code:"CG",flag:"🇨🇬",capital:"Brazzaville",continent:"África",lat:-0.228021,lng:15.827659},
+  {name:"Coreia do Norte",code:"KP",flag:"🇰🇵",capital:"Pyongyang",continent:"Ásia",lat:40.339852,lng:127.510093},
+  {name:"Coreia do Sul",code:"KR",flag:"🇰🇷",capital:"Seul",continent:"Ásia",lat:35.907757,lng:127.766922},
+  {name:"Costa do Marfim",code:"CI",flag:"🇨🇮",capital:"Yamoussoukro",continent:"África",lat:7.539989,lng:-5.54708},
+  {name:"Costa Rica",code:"CR",flag:"🇨🇷",capital:"San José",continent:"América",lat:9.748917,lng:-83.753428},
+  {name:"Croácia",code:"HR",flag:"🇭🇷",capital:"Zagreb",continent:"Europa",lat:45.1,lng:15.2},
+  {name:"Cuba",code:"CU",flag:"🇨🇺",capital:"Havana",continent:"América",lat:21.521757,lng:-77.781167},
+  {name:"Dinamarca",code:"DK",flag:"🇩🇰",capital:"Copenhague",continent:"Europa",lat:56.26392,lng:9.501785},
+  {name:"Djibouti",code:"DJ",flag:"🇩🇯",capital:"Djibuti",continent:"África",lat:11.825138,lng:42.590275},
+  {name:"Dominica",code:"DM",flag:"🇩🇲",capital:"Roseau",continent:"América",lat:15.414999,lng:-61.370976},
+  {name:"Egito",code:"EG",flag:"🇪🇬",capital:"Cairo",continent:"África",lat:26.820553,lng:30.802498},
+  {name:"El Salvador",code:"SV",flag:"🇸🇻",capital:"San Salvador",continent:"América",lat:13.794185,lng:-88.89653},
+  {name:"Emirados Árabes Unidos",code:"AE",flag:"🇦🇪",capital:"Abu Dhabi",continent:"Ásia",lat:23.424076,lng:53.847818},
+  {name:"Equador",code:"EC",flag:"🇪🇨",capital:"Quito",continent:"América",lat:-1.831239,lng:-78.183406},
+  {name:"Eritreia",code:"ER",flag:"🇪🇷",capital:"Asmara",continent:"África",lat:15.179384,lng:39.782334},
+  {name:"Eslováquia",code:"SK",flag:"🇸🇰",capital:"Bratislava",continent:"Europa",lat:48.669026,lng:19.699024},
+  {name:"Eslovênia",code:"SI",flag:"🇸🇮",capital:"Ljubljana",continent:"Europa",lat:46.151241,lng:14.995463},
+  {name:"Espanha",code:"ES",flag:"🇪🇸",capital:"Madri",continent:"Europa",lat:40.463667,lng:-3.74922},
+  {name:"Estado da Palestina",code:"PS",flag:"🇵🇸",capital:"Ramallah",continent:"Ásia",lat:31.952162,lng:35.233154},
+  {name:"Estados Unidos",code:"US",flag:"🇺🇸",capital:"Washington D.C.",continent:"América",lat:37.09024,lng:-95.712891},
+  {name:"Etiópia",code:"ET",flag:"🇪🇹",capital:"Adis Abeba",continent:"África",lat:9.145,lng:40.489673},
+  {name:"Fiji",code:"FJ",flag:"🇫🇯",capital:"Suva",continent:"Oceania",lat:-16.578193,lng:179.414413},
+  {name:"Filipinas",code:"PH",flag:"🇵🇭",capital:"Manila",continent:"Ásia",lat:12.879721,lng:121.774017},
+  {name:"Finlândia",code:"FI",flag:"🇫🇮",capital:"Helsinque",continent:"Europa",lat:61.92411,lng:25.748151},
+  {name:"França",code:"FR",flag:"🇫🇷",capital:"Paris",continent:"Europa",lat:46.227638,lng:2.213749},
+  {name:"Gabão",code:"GA",flag:"🇬🇦",capital:"Libreville",continent:"África",lat:-0.803689,lng:11.609444},
+  {name:"Gâmbia",code:"GM",flag:"🇬🇲",capital:"Banjul",continent:"África",lat:13.443182,lng:-15.310139},
+  {name:"Gana",code:"GH",flag:"🇬🇭",capital:"Acra",continent:"África",lat:7.946527,lng:-1.023194},
+  {name:"Geórgia",code:"GE",flag:"🇬🇪",capital:"Tbilisi",continent:"Ásia",lat:42.315407,lng:43.356892},
+  {name:"Granada",code:"GD",flag:"🇬🇩",capital:"St. George's",continent:"América",lat:12.1165,lng:-61.679},
+  {name:"Grécia",code:"GR",flag:"🇬🇷",capital:"Atenas",continent:"Europa",lat:39.074208,lng:21.824312},
+  {name:"Guatemala",code:"GT",flag:"🇬🇹",capital:"Cidade da Guatemala",continent:"América",lat:15.783471,lng:-90.230759},
+  {name:"Guiana",code:"GY",flag:"🇬🇾",capital:"Georgetown",continent:"América",lat:4.860416,lng:-58.93018},
+  {name:"Guiné",code:"GN",flag:"🇬🇳",capital:"Conakri",continent:"África",lat:9.945587,lng:-9.696645},
+  {name:"Guiné-Bissau",code:"GW",flag:"🇬🇼",capital:"Bissau",continent:"África",lat:11.803749,lng:-15.180413},
+  {name:"Guiné Equatorial",code:"GQ",flag:"🇬🇶",capital:"Malabo",continent:"África",lat:1.650801,lng:10.267895},
+  {name:"Haiti",code:"HT",flag:"🇭🇹",capital:"Porto Príncipe",continent:"América",lat:18.971187,lng:-72.285215},
+  {name:"Honduras",code:"HN",flag:"🇭🇳",capital:"Tegucigalpa",continent:"América",lat:15.199999,lng:-86.241905},
+  {name:"Hungria",code:"HU",flag:"🇭🇺",capital:"Budapeste",continent:"Europa",lat:47.162494,lng:19.503304},
+  {name:"Iêmen",code:"YE",flag:"🇾🇪",capital:"Sanaa",continent:"Ásia",lat:15.552727,lng:48.516388},
+  {name:"Ilhas Marshall",code:"MH",flag:"🇲🇭",capital:"Majuro",continent:"Oceania",lat:7.131474,lng:171.184478},
+  {name:"Ilhas Salomão",code:"SB",flag:"🇸🇧",capital:"Honiara",continent:"Oceania",lat:-9.64571,lng:160.156194},
+  {name:"Índia",code:"IN",flag:"🇮🇳",capital:"Nova Délhi",continent:"Ásia",lat:20.593684,lng:78.96288},
+  {name:"Indonésia",code:"ID",flag:"🇮🇩",capital:"Jacarta",continent:"Ásia",lat:-0.789275,lng:113.921327},
+  {name:"Irã",code:"IR",flag:"🇮🇷",capital:"Teerã",continent:"Ásia",lat:32.427908,lng:53.688046},
+  {name:"Iraque",code:"IQ",flag:"🇮🇶",capital:"Bagdá",continent:"Ásia",lat:33.223191,lng:43.679291},
+  {name:"Irlanda",code:"IE",flag:"🇮🇪",capital:"Dublin",continent:"Europa",lat:53.41291,lng:-8.24389},
+  {name:"Islândia",code:"IS",flag:"🇮🇸",capital:"Reiquiavique",continent:"Europa",lat:64.963051,lng:-19.020835},
+  {name:"Israel",code:"IL",flag:"🇮🇱",capital:"Jerusalém",continent:"Ásia",lat:31.046051,lng:34.851612},
+  {name:"Itália",code:"IT",flag:"🇮🇹",capital:"Roma",continent:"Europa",lat:41.87194,lng:12.56738},
+  {name:"Jamaica",code:"JM",flag:"🇯🇲",capital:"Kingston",continent:"América",lat:18.109581,lng:-77.297508},
+  {name:"Japão",code:"JP",flag:"🇯🇵",capital:"Tóquio",continent:"Ásia",lat:36.204824,lng:138.252924},
+  {name:"Jordânia",code:"JO",flag:"🇯🇴",capital:"Amã",continent:"Ásia",lat:30.585164,lng:36.238414},
+  {name:"Kiribati",code:"KI",flag:"🇰🇮",capital:"Tarawa",continent:"Oceania",lat:-3.370417,lng:-168.734039},
+  {name:"Kosovo",code:"XK",flag:"🇽🇰",capital:"Pristina",continent:"Europa",lat:42.602636,lng:20.902977},
+  {name:"Kuwait",code:"KW",flag:"🇰🇼",capital:"Cidade do Kuwait",continent:"Ásia",lat:29.31166,lng:47.481766},
+  {name:"Laos",code:"LA",flag:"🇱🇦",capital:"Vientiane",continent:"Ásia",lat:19.85627,lng:102.495496},
+  {name:"Lesoto",code:"LS",flag:"🇱🇸",capital:"Maseru",continent:"África",lat:-29.609988,lng:28.233608},
+  {name:"Letônia",code:"LV",flag:"🇱🇻",capital:"Riga",continent:"Europa",lat:56.879635,lng:24.603189},
+  {name:"Líbano",code:"LB",flag:"🇱🇧",capital:"Beirute",continent:"Ásia",lat:33.854721,lng:35.862285},
+  {name:"Libéria",code:"LR",flag:"🇱🇷",capital:"Monróvia",continent:"África",lat:6.428055,lng:-9.429499},
+  {name:"Líbia",code:"LY",flag:"🇱🇾",capital:"Trípoli",continent:"África",lat:26.3351,lng:17.228331},
+  {name:"Liechtenstein",code:"LI",flag:"🇱🇮",capital:"Vaduz",continent:"Europa",lat:47.166,lng:9.555373},
+  {name:"Lituânia",code:"LT",flag:"🇱🇹",capital:"Vilnius",continent:"Europa",lat:55.169438,lng:23.881275},
+  {name:"Luxemburgo",code:"LU",flag:"🇱🇺",capital:"Luxemburgo",continent:"Europa",lat:49.815273,lng:6.129583},
+  {name:"Madagascar",code:"MG",flag:"🇲🇬",capital:"Antananarivo",continent:"África",lat:-18.766947,lng:46.869107},
+  {name:"Malásia",code:"MY",flag:"🇲🇾",capital:"Kuala Lumpur",continent:"Ásia",lat:4.210484,lng:101.975766},
+  {name:"Malawi",code:"MW",flag:"🇲🇼",capital:"Lilongwe",continent:"África",lat:-13.254308,lng:34.301525},
+  {name:"Maldivas",code:"MV",flag:"🇲🇻",capital:"Malé",continent:"Ásia",lat:3.202778,lng:73.22068},
+  {name:"Mali",code:"ML",flag:"🇲🇱",capital:"Bamako",continent:"África",lat:17.570692,lng:-3.996166},
+  {name:"Malta",code:"MT",flag:"🇲🇹",capital:"Valletta",continent:"Europa",lat:35.937496,lng:14.375416},
+  {name:"Marrocos",code:"MA",flag:"🇲🇦",capital:"Rabat",continent:"África",lat:31.791702,lng:-7.09262},
+  {name:"Maurício",code:"MU",flag:"🇲🇺",capital:"Port Louis",continent:"África",lat:-20.348404,lng:57.552152},
+  {name:"Mauritânia",code:"MR",flag:"🇲🇷",capital:"Nouakchott",continent:"África",lat:21.00789,lng:-10.940835},
+  {name:"México",code:"MX",flag:"🇲🇽",capital:"Cidade do México",continent:"América",lat:23.634501,lng:-102.552784},
+  {name:"Micronésia",code:"FM",flag:"🇫🇲",capital:"Palikir",continent:"Oceania",lat:7.425554,lng:150.550812},
+  {name:"Moçambique",code:"MZ",flag:"🇲🇿",capital:"Maputo",continent:"África",lat:-18.665695,lng:35.529562},
+  {name:"Moldávia",code:"MD",flag:"🇲🇩",capital:"Chisinau",continent:"Europa",lat:47.411631,lng:28.369885},
+  {name:"Mônaco",code:"MC",flag:"🇲🇨",capital:"Mônaco",continent:"Europa",lat:43.750298,lng:7.412841},
+  {name:"Mongólia",code:"MN",flag:"🇲🇳",capital:"Ulaanbaatar",continent:"Ásia",lat:46.862496,lng:103.846656},
+  {name:"Montenegro",code:"ME",flag:"🇲🇪",capital:"Podgorica",continent:"Europa",lat:42.708678,lng:19.37439},
+  {name:"Myanmar",code:"MM",flag:"🇲🇲",capital:"Naypyidaw",continent:"Ásia",lat:21.913965,lng:95.956223},
+  {name:"Namíbia",code:"NA",flag:"🇳🇦",capital:"Windhoek",continent:"África",lat:-22.95764,lng:18.49041},
+  {name:"Nauru",code:"NR",flag:"🇳🇷",capital:"Yaren",continent:"Oceania",lat:-0.522778,lng:166.931503},
+  {name:"Nepal",code:"NP",flag:"🇳🇵",capital:"Katmandu",continent:"Ásia",lat:28.394857,lng:84.124008},
+  {name:"Nicarágua",code:"NI",flag:"🇳🇮",capital:"Manágua",continent:"América",lat:12.865416,lng:-85.207229},
+  {name:"Níger",code:"NE",flag:"🇳🇪",capital:"Niamei",continent:"África",lat:17.607789,lng:8.081666},
+  {name:"Nigéria",code:"NG",flag:"🇳🇬",capital:"Abuja",continent:"África",lat:9.081999,lng:8.675277},
+  {name:"Noruega",code:"NO",flag:"🇳🇴",capital:"Oslo",continent:"Europa",lat:60.472024,lng:8.468946},
+  {name:"Nova Zelândia",code:"NZ",flag:"🇳🇿",capital:"Wellington",continent:"Oceania",lat:-40.900557,lng:174.885971},
+  {name:"Omã",code:"OM",flag:"🇴🇲",capital:"Mascate",continent:"Ásia",lat:21.512583,lng:55.923255},
+  {name:"Países Baixos",code:"NL",flag:"🇳🇱",capital:"Amsterdã",continent:"Europa",lat:52.132633,lng:5.291266},
+  {name:"Paquistão",code:"PK",flag:"🇵🇰",capital:"Islamabade",continent:"Ásia",lat:30.375321,lng:69.345116},
+  {name:"Palau",code:"PW",flag:"🇵🇼",capital:"Ngerulmud",continent:"Oceania",lat:7.51498,lng:134.58252},
+  {name:"Panamá",code:"PA",flag:"🇵🇦",capital:"Cidade do Panamá",continent:"América",lat:8.537981,lng:-80.782127},
+  {name:"Papua Nova Guiné",code:"PG",flag:"🇵🇬",capital:"Port Moresby",continent:"Oceania",lat:-6.314993,lng:143.95555},
+  {name:"Paraguai",code:"PY",flag:"🇵🇾",capital:"Assunção",continent:"América",lat:-23.442503,lng:-58.443832},
+  {name:"Peru",code:"PE",flag:"🇵🇪",capital:"Lima",continent:"América",lat:-9.189967,lng:-75.015152},
+  {name:"Polônia",code:"PL",flag:"🇵🇱",capital:"Varsóvia",continent:"Europa",lat:51.919438,lng:19.145136},
+  {name:"Portugal",code:"PT",flag:"🇵🇹",capital:"Lisboa",continent:"Europa",lat:39.399872,lng:-8.224454},
+  {name:"Quirguistão",code:"KG",flag:"🇰🇬",capital:"Bishkek",continent:"Ásia",lat:41.20438,lng:74.766098},
+  {name:"Quênia",code:"KE",flag:"🇰🇪",capital:"Nairóbi",continent:"África",lat:-0.023559,lng:37.906193},
+  {name:"Reino Unido",code:"GB",flag:"🇬🇧",capital:"Londres",continent:"Europa",lat:55.378051,lng:-3.435973},
+  {name:"República Centro-Africana",code:"CF",flag:"🇨🇫",capital:"Bangui",continent:"África",lat:6.611111,lng:20.939444},
+  {name:"República Democrática do Congo",code:"CD",flag:"🇨🇩",capital:"Kinshasa",continent:"África",lat:-4.038333,lng:21.758664},
+  {name:"República Dominicana",code:"DO",flag:"🇩🇴",capital:"Santo Domingo",continent:"América",lat:18.735693,lng:-70.162651},
+  {name:"Romênia",code:"RO",flag:"🇷🇴",capital:"Bucareste",continent:"Europa",lat:45.943161,lng:24.96676},
+  {name:"Ruanda",code:"RW",flag:"🇷🇼",capital:"Kigali",continent:"África",lat:-1.940278,lng:29.873888},
+  {name:"Rússia",code:"RU",flag:"🇷🇺",capital:"Moscou",continent:"Europa",lat:61.52401,lng:105.318756},
+  {name:"Samoa",code:"WS",flag:"🇼🇸",capital:"Apia",continent:"Oceania",lat:-13.759029,lng:-172.104629},
+  {name:"San Marino",code:"SM",flag:"🇸🇲",capital:"Cidade de San Marino",continent:"Europa",lat:43.94236,lng:12.457777},
+  {name:"Santa Lúcia",code:"LC",flag:"🇱🇨",capital:"Castries",continent:"América",lat:13.909444,lng:-60.978893},
+  {name:"São Cristóvão e Nevis",code:"KN",flag:"🇰🇳",capital:"Basseterre",continent:"América",lat:17.357822,lng:-62.782998},
+  {name:"São Tomé e Príncipe",code:"ST",flag:"🇸🇹",capital:"São Tomé",continent:"África",lat:0.18636,lng:6.613081},
+  {name:"São Vicente e Granadinas",code:"VC",flag:"🇻🇨",capital:"Kingstown",continent:"América",lat:12.984305,lng:-61.287228},
+  {name:"Senegal",code:"SN",flag:"🇸🇳",capital:"Dacar",continent:"África",lat:14.497401,lng:-14.452362},
+  {name:"Serra Leoa",code:"SL",flag:"🇸🇱",capital:"Freetown",continent:"África",lat:8.460555,lng:-11.779889},
+  {name:"Sérvia",code:"RS",flag:"🇷🇸",capital:"Belgrado",continent:"Europa",lat:44.016521,lng:21.005859},
+  {name:"Singapura",code:"SG",flag:"🇸🇬",capital:"Singapura",continent:"Ásia",lat:1.352083,lng:103.819836},
+  {name:"Síria",code:"SY",flag:"🇸🇾",capital:"Damasco",continent:"Ásia",lat:34.802075,lng:38.996815},
+  {name:"Somália",code:"SO",flag:"🇸🇴",capital:"Mogadíscio",continent:"África",lat:5.152149,lng:46.199616},
+  {name:"Sri Lanka",code:"LK",flag:"🇱🇰",capital:"Colombo",continent:"Ásia",lat:7.873054,lng:80.771797},
+  {name:"Suazilândia",code:"SZ",flag:"🇸🇿",capital:"Mbabane",continent:"África",lat:-26.522503,lng:31.465866},
+  {name:"Sudão",code:"SD",flag:"🇸🇩",capital:"Cartum",continent:"África",lat:12.862807,lng:30.217636},
+  {name:"Sudão do Sul",code:"SS",flag:"🇸🇸",capital:"Juba",continent:"África",lat:6.877,lng:31.307},
+  {name:"Suécia",code:"SE",flag:"🇸🇪",capital:"Estocolmo",continent:"Europa",lat:60.128161,lng:18.643501},
+  {name:"Suíça",code:"CH",flag:"🇨🇭",capital:"Berna",continent:"Europa",lat:46.818188,lng:8.227512},
+  {name:"Suriname",code:"SR",flag:"🇸🇷",capital:"Paramaribo",continent:"América",lat:3.919305,lng:-56.027783},
+  {name:"Tailândia",code:"TH",flag:"🇹🇭",capital:"Bangcoc",continent:"Ásia",lat:15.870032,lng:100.992541},
+  {name:"Taiwan",code:"TW",flag:"🇹🇼",capital:"Taipei",continent:"Ásia",lat:23.69781,lng:120.960515},
+  {name:"Tajiquistão",code:"TJ",flag:"🇹🇯",capital:"Dushanbe",continent:"Ásia",lat:38.861034,lng:71.276093},
+  {name:"Tanzânia",code:"TZ",flag:"🇹🇿",capital:"Dodoma",continent:"África",lat:-6.369028,lng:34.888822},
+  {name:"Timor-Leste",code:"TL",flag:"🇹🇱",capital:"Díli",continent:"Ásia",lat:-8.874217,lng:125.727539},
+  {name:"Togo",code:"TG",flag:"🇹🇬",capital:"Lomé",continent:"África",lat:8.619543,lng:0.824782},
+  {name:"Tonga",code:"TO",flag:"🇹🇴",capital:"Nuku'alofa",continent:"Oceania",lat:-21.178986,lng:-175.198242},
+  {name:"Trinidad e Tobago",code:"TT",flag:"🇹🇹",capital:"Porto Espanha",continent:"América",lat:10.691803,lng:-61.222503},
+  {name:"Tunísia",code:"TN",flag:"🇹🇳",capital:"Túnis",continent:"África",lat:33.886917,lng:9.537499},
+  {name:"Turcomenistão",code:"TM",flag:"🇹🇲",capital:"Asgabate",continent:"Ásia",lat:38.969719,lng:59.556278},
+  {name:"Turquia",code:"TR",flag:"🇹🇷",capital:"Ancara",continent:"Ásia",lat:38.963745,lng:35.243322},
+  {name:"Tuvalu",code:"TV",flag:"🇹🇻",capital:"Funafuti",continent:"Oceania",lat:-7.109535,lng:177.64933},
+  {name:"Ucrânia",code:"UA",flag:"🇺🇦",capital:"Kiev",continent:"Europa",lat:48.379433,lng:31.16558},
+  {name:"Uganda",code:"UG",flag:"🇺🇬",capital:"Kampala",continent:"África",lat:1.373333,lng:32.290275},
+  {name:"Uruguai",code:"UY",flag:"🇺🇾",capital:"Montevidéu",continent:"América",lat:-32.522779,lng:-55.765835},
+  {name:"Uzbequistão",code:"UZ",flag:"🇺🇿",capital:"Tashkent",continent:"Ásia",lat:41.377491,lng:64.585262},
+  {name:"Vanuatu",code:"VU",flag:"🇻🇺",capital:"Port Vila",continent:"Oceania",lat:-15.376706,lng:166.959158},
+  {name:"Venezuela",code:"VE",flag:"🇻🇪",capital:"Caracas",continent:"América",lat:6.42375,lng:-66.58973},
+  {name:"Vietnã",code:"VN",flag:"🇻🇳",capital:"Hanói",continent:"Ásia",lat:14.058324,lng:108.277199},
+  {name:"Zimbábue",code:"ZW",flag:"🇿🇼",capital:"Harare",continent:"África",lat:-19.015438,lng:29.154857},
+  {name:"Zâmbia",code:"ZM",flag:"🇿🇲",capital:"Lusaka",continent:"África",lat:-13.133897,lng:27.849332},
+];
+
+let map, originMarker, radiusCircle, countryMarkers = [];
+let originCoords = null;
+let selectedIndex = -1;
+let searchTimeout = null;
+let geocodeCache = {};
+
+map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
+
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; OpenStreetMap &copy; CARTO',
+  subdomains: 'abcd',
+  maxZoom: 19
+}).addTo(map);
+
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+const cityInput = document.getElementById('city-input');
+const radiusInput = document.getElementById('radius-input');
+const radiusRange = document.getElementById('radius-range');
+const unitSelect = document.getElementById('unit-select');
+const autocompleteList = document.getElementById('autocomplete');
+const resultsList = document.getElementById('results-list');
+const countBadge = document.getElementById('count-badge');
+const loading = document.getElementById('loading');
+const btnSearch = document.getElementById('btn-search');
+const toast = document.getElementById('toast');
+
+radiusRange.addEventListener('input', () => {
+  radiusInput.value = radiusRange.value;
+});
+radiusInput.addEventListener('input', () => {
+  const v = Math.min(20000, Math.max(100, parseInt(radiusInput.value) || 100));
+  radiusRange.value = v;
+});
+
+cityInput.addEventListener('input', () => {
+  originCoords = null;
+  clearTimeout(searchTimeout);
+  const q = cityInput.value.trim();
+  if (q.length < 3) { closeAutocomplete(); return; }
+  searchTimeout = setTimeout(() => fetchSuggestions(q), 300);
+});
+
+cityInput.addEventListener('keydown', (e) => {
+  const items = autocompleteList.querySelectorAll('.autocomplete-item');
+  if (e.key === 'ArrowDown') { selectedIndex = Math.min(selectedIndex + 1, items.length - 1); updateActive(items); e.preventDefault(); }
+  else if (e.key === 'ArrowUp') { selectedIndex = Math.max(selectedIndex - 1, 0); updateActive(items); e.preventDefault(); }
+  else if (e.key === 'Enter') {
+    if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click();
+    else doSearch();
+  }
+  else if (e.key === 'Escape') closeAutocomplete();
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.input-wrap')) closeAutocomplete();
+});
+
+function updateActive(items) {
+  items.forEach((el, i) => el.classList.toggle('active', i === selectedIndex));
+}
+
+async function fetchSuggestions(q) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+    const data = await res.json();
+    if (!data.length) { closeAutocomplete(); return; }
+    showAutocomplete(data);
+  } catch { closeAutocomplete(); }
+}
+
+function showAutocomplete(results) {
+  selectedIndex = -1;
+  autocompleteList.innerHTML = '';
+  results.forEach(r => {
+    const city = r.address.city || r.address.town || r.address.village || r.address.municipality || r.name;
+    const country = r.address.country || '';
+    const display = city ? `${city}` : r.display_name.split(',')[0];
+    const div = document.createElement('div');
+    div.className = 'autocomplete-item';
+    div.innerHTML = `<strong>${display}</strong><small>${country}</small>`;
+    div.addEventListener('click', () => {
+      cityInput.value = r.display_name.split(',')[0] + (country ? `, ${country}` : '');
+      originCoords = { lat: parseFloat(r.lat), lng: parseFloat(r.lon) };
+      geocodeCache[cityInput.value] = originCoords;
+      closeAutocomplete();
+      doSearch();
+    });
+    autocompleteList.appendChild(div);
+  });
+  autocompleteList.classList.add('show');
+}
+
+function closeAutocomplete() {
+  autocompleteList.classList.remove('show');
+  autocompleteList.innerHTML = '';
+  selectedIndex = -1;
+}
+
+async function geocodeCity(name) {
+  if (geocodeCache[name]) return geocodeCache[name];
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+  const data = await res.json();
+  if (!data.length) return null;
+  const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  geocodeCache[name] = coords;
+  return coords;
+}
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function setLoading(show, msg='Buscando localização…') {
+  loading.querySelector('p').textContent = msg;
+  loading.classList.toggle('show', show);
+}
+
+async function doSearch() {
+  const cityName = cityInput.value.trim();
+  if (!cityName) { showToast('Informe uma cidade de origem'); return; }
+
+  let radiusKm = parseInt(radiusInput.value) || 2000;
+  if (unitSelect.value === 'mi') radiusKm = Math.round(radiusKm * 1.60934);
+
+  btnSearch.disabled = true;
+  setLoading(true, originCoords ? 'Calculando países…' : 'Buscando localização…');
+
+  try {
+    if (!originCoords) {
+      originCoords = await geocodeCity(cityName);
+      if (!originCoords) { showToast('Cidade não encontrada. Tente outro nome.'); return; }
+    }
+
+    clearMapLayers();
+
+    originMarker = L.marker([originCoords.lat, originCoords.lng], {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="width:14px;height:14px;background:#1D6B5C;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
+        iconSize: [14,14], iconAnchor: [7,7]
+      })
+    }).addTo(map).bindPopup(`<div class="popup-content"><p class="popup-name">📍 ${cityName}</p><p class="popup-dist" style="color:#6B6860">Origem da busca</p></div>`);
+
+    radiusCircle = L.circle([originCoords.lat, originCoords.lng], {
+      radius: radiusKm * 1000,
+      color: '#1D6B5C',
+      fillColor: '#1D6B5C',
+      fillOpacity: 0.06,
+      weight: 2,
+      dashArray: '6 4'
+    }).addTo(map);
+
+    const found = COUNTRIES
+      .map(c => ({ ...c, dist: Math.round(haversine(originCoords.lat, originCoords.lng, c.lat, c.lng)) }))
+      .filter(c => c.dist <= radiusKm)
+      .sort((a, b) => a.dist - b.dist);
+
+    found.forEach(c => {
+      const distLabel = unitSelect.value === 'mi' ? `${Math.round(c.dist / 1.60934)} mi` : `${c.dist} km`;
+      const marker = L.marker([c.lat, c.lng], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div style="background:#fff;border:2px solid #1D6B5C;border-radius:20px;padding:1px 7px;font-size:12px;white-space:nowrap;font-family:DM Sans,sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.15);color:#1C1A17;font-weight:500">${c.flag} ${c.name}</div>`,
+          iconAnchor: [0, 8]
+        })
+      }).addTo(map);
+
+      marker.bindPopup(`
+        <div class="popup-content">
+          <span class="popup-flag">${c.flag}</span>
+          <p class="popup-name">${c.name}</p>
+          <p class="popup-capital">Capital: ${c.capital}</p>
+          <p class="popup-dist">${distLabel} de ${cityName}</p>
+        </div>
+      `);
+
+      countryMarkers.push(marker);
+    });
+
+    const bounds = radiusCircle.getBounds();
+    map.fitBounds(bounds, { padding: [40, 40] });
+
+    renderList(found, cityName);
+    countBadge.textContent = found.length;
+    countBadge.style.display = found.length ? 'inline-block' : 'none';
+
+    if (!found.length) showToast('Nenhum país encontrado nesse raio.');
+
+  } catch (err) {
+    showToast('Erro ao buscar. Verifique sua conexão.');
+    console.error(err);
+  } finally {
+    btnSearch.disabled = false;
+    setLoading(false);
+  }
+}
+
+function renderList(countries, cityName) {
+  if (!countries.length) {
+    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Tente aumentar o raio ou escolher outra cidade.</p></div>`;
+    return;
+  }
+
+  const unit = unitSelect.value;
+  resultsList.innerHTML = countries.map((c, i) => {
+    const distKm = c.dist;
+    const distLabel = unit === 'mi' ? `${Math.round(distKm / 1.60934).toLocaleString('pt-BR')} mi` : `${distKm.toLocaleString('pt-BR')} km`;
+    return `<div class="country-item" onclick="focusCountry(${i})" title="${c.name}">
+      <span class="flag">${c.flag}</span>
+      <div class="country-info">
+        <div class="country-name">${c.name}</div>
+        <div class="country-dist">Capital: ${c.capital} · ${distLabel}</div>
+      </div>
+      <span class="country-cont">${c.continent}</span>
+    </div>`;
+  }).join('');
+}
+
+let currentFound = [];
+function focusCountry(i) {
+  if (!countryMarkers[i]) return;
+  map.setView(countryMarkers[i].getLatLng(), 5, { animate: true });
+  countryMarkers[i].openPopup();
+}
+
+const origDoSearch = doSearch;
+window.doSearch = async function() {
+  await origDoSearch();
+  currentFound = [];
+}
+
+function clearMapLayers() {
+  if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
+  if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+  countryMarkers.forEach(m => map.removeLayer(m));
+  countryMarkers = [];
+}
+
+function resetMap() {
+  clearMapLayers();
+  originCoords = null;
+  cityInput.value = '';
+  radiusInput.value = '2000';
+  radiusRange.value = '2000';
+  resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e um raio para ver os países próximos.</p></div>`;
+  countBadge.style.display = 'none';
+  map.setView([20, 0], 2);
+}
+
+window.focusCountry = focusCountry;
+window.resetMap = resetMap;
+window.doSearch = async function() {
+  await origDoSearch();
+}
+</script>
+</body>
+</html>
