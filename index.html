@@ -52,24 +52,12 @@
   .autocomplete-item:last-child { border-bottom: none; }
   .autocomplete-item:hover, .autocomplete-item.active { background: var(--teal-light); }
 
-  /* Radius controls */
-  .radius-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; align-items: end; }
+  /* Radius min/max controls */
+  .radius-minmax-row { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 0.4rem; align-items: center; }
+  .radius-dash { color: var(--ink-faint); font-size: 0.85rem; }
+  .field-hint { font-size: 0.72rem; color: var(--ink-muted); margin-top: 0.4rem; line-height: 1.4; }
   .unit-select { padding: 0.5rem 1.4rem 0.5rem 0.5rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: inherit; font-size: 0.84rem; color: var(--ink); background: var(--cream); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236B6860' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 5px center; transition: border-color 0.15s; }
   .unit-select:focus { border-color: var(--teal); }
-
-  .range-section { margin-top: 0.5rem; }
-
-  /* Min/max inputs above slider */
-  .range-bounds { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-  .bound-input { width: 72px; padding: 0.3rem 0.4rem; border: 1px solid var(--border-strong); border-radius: 6px; font-family: inherit; font-size: 0.75rem; color: var(--ink); background: var(--cream); outline: none; text-align: center; transition: border-color 0.15s; }
-  .bound-input:focus { border-color: var(--teal); background: #fff; }
-  .bound-sep { flex: 1; height: 1px; background: var(--border); }
-  .bound-label { font-size: 0.68rem; color: var(--ink-faint); white-space: nowrap; }
-
-  .range-wrap { position: relative; padding: 2px 0; }
-  .range-wrap input[type=range] { width: 100%; height: 4px; accent-color: var(--teal); cursor: pointer; }
-  .range-minmax { display: flex; justify-content: space-between; margin-top: 3px; }
-  .range-minmax span { font-size: 0.68rem; color: var(--ink-faint); }
 
   .btn-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-top: 0.2rem; }
   .btn-search { padding: 0.6rem; background: var(--teal); color: #fff; border: none; border-radius: var(--radius); font-family: inherit; font-size: 0.87rem; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
@@ -156,6 +144,9 @@
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
     .map-wrap { height: 50vh; }
     header { padding: 0.85rem 1rem; }
+    .radius-minmax-row { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; row-gap: 0.4rem; }
+    .radius-dash { display: none; }
+    .unit-select { grid-column: 1 / -1; }
   }
 </style>
 </head>
@@ -185,34 +176,23 @@
       </div>
 
       <div class="field">
-        <label>Raio de distância</label>
-        <div class="radius-row">
+        <label>Faixa de distância</label>
+        <div class="radius-minmax-row">
           <div class="input-wrap">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            <input type="number" id="radius-input" value="2000" min="100" max="20000" placeholder="2000" />
+            <input type="number" id="radius-min" value="0" min="0" placeholder="Mín" />
+          </div>
+          <span class="radius-dash">—</span>
+          <div class="input-wrap">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+            <input type="number" id="radius-max" value="2000" min="1" placeholder="Máx" />
           </div>
           <select class="unit-select" id="unit-select">
             <option value="km">km</option>
             <option value="mi">mi</option>
           </select>
         </div>
-
-        <div class="range-section">
-          <div class="range-bounds">
-            <span class="bound-label">Min</span>
-            <input type="number" class="bound-input" id="range-min" value="100" min="1" max="19999" />
-            <div class="bound-sep"></div>
-            <input type="number" class="bound-input" id="range-max" value="20000" min="2" max="40000" />
-            <span class="bound-label">Max</span>
-          </div>
-          <div class="range-wrap">
-            <input type="range" id="radius-range" min="100" max="20000" step="100" value="2000" />
-            <div class="range-minmax">
-              <span id="lbl-min">100 km</span>
-              <span id="lbl-max">20.000 km</span>
-            </div>
-          </div>
-        </div>
+        <p class="field-hint" id="range-hint">Mostra países entre 0 e 2.000 km da cidade</p>
       </div>
 
       <div class="btn-row">
@@ -247,7 +227,7 @@
     <div class="results-list" id="results-list">
       <div class="empty-state">
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>
-        <p><strong>Nenhuma busca realizada</strong>Insira uma cidade e um raio para ver os países próximos.</p>
+        <p><strong>Nenhuma busca realizada</strong>Insira uma cidade e a faixa de distância para ver os países.</p>
       </div>
     </div>
   </aside>
@@ -476,7 +456,7 @@ const PIN_COLORS = [
 ];
 
 // ── STATE ────────────────────────────────────────────────────────
-let map, originMarker, radiusCircle, countryMarkers = [];
+let map, originMarker, radiusCircle, innerCircle, countryMarkers = [];
 let originCoords = null;
 let selectedIndex = -1;
 let searchTimeout = null;
@@ -496,12 +476,9 @@ L.control.zoom({ position: 'bottomright' }).addTo(map);
 
 // ── DOM REFS ──────────────────────────────────────────────────────
 const cityInput    = document.getElementById('city-input');
-const radiusInput  = document.getElementById('radius-input');
-const radiusRange  = document.getElementById('radius-range');
-const rangeMin     = document.getElementById('range-min');
-const rangeMax     = document.getElementById('range-max');
-const lblMin       = document.getElementById('lbl-min');
-const lblMax       = document.getElementById('lbl-max');
+const radiusMin    = document.getElementById('radius-min');
+const radiusMax    = document.getElementById('radius-max');
+const rangeHint    = document.getElementById('range-hint');
 const unitSelect   = document.getElementById('unit-select');
 const autocompleteList = document.getElementById('autocomplete');
 const resultsList  = document.getElementById('results-list');
@@ -516,52 +493,41 @@ const pinsList     = document.getElementById('pins-list');
 const pinsCount    = document.getElementById('pins-count');
 const pinsToggle   = document.getElementById('pins-toggle');
 
-// ── RANGE MIN/MAX ─────────────────────────────────────────────────
-function syncRangeLabels() {
-  const unit = unitSelect.value;
-  const minV = parseInt(rangeMin.value) || 100;
-  const maxV = parseInt(rangeMax.value) || 20000;
-  const fmt = v => unit === 'mi'
-    ? Math.round(v / 1.60934).toLocaleString('pt-BR') + ' mi'
-    : v.toLocaleString('pt-BR') + ' km';
-  lblMin.textContent = fmt(minV);
-  lblMax.textContent = fmt(maxV);
+// ── RADIUS MIN/MAX ────────────────────────────────────────────────
+function getRadiusBounds() {
+  let minV = parseFloat(radiusMin.value);
+  let maxV = parseFloat(radiusMax.value);
+  if (isNaN(minV) || minV < 0) minV = 0;
+  if (isNaN(maxV) || maxV <= 0) maxV = 1;
+  if (maxV <= minV) maxV = minV + 1;
+  return { minV, maxV };
 }
 
-function applyBounds() {
-  let minV = parseInt(rangeMin.value) || 100;
-  let maxV = parseInt(rangeMax.value) || 20000;
-  if (minV < 1) minV = 1;
-  if (maxV < minV + 1) maxV = minV + 1;
-  rangeMin.value = minV;
-  rangeMax.value = maxV;
-  radiusRange.min = minV;
-  radiusRange.max = maxV;
-  // clamp current value
-  let cur = parseInt(radiusInput.value) || minV;
-  cur = Math.max(minV, Math.min(maxV, cur));
-  radiusInput.value = cur;
-  radiusRange.value = cur;
-  syncRangeLabels();
+function syncRangeHint() {
+  const { minV, maxV } = getRadiusBounds();
+  const unit = unitSelect.value === 'mi' ? 'mi' : 'km';
+  const fmt = v => v.toLocaleString('pt-BR');
+  rangeHint.textContent = minV > 0
+    ? `Mostra países entre ${fmt(minV)} e ${fmt(maxV)} ${unit} da cidade`
+    : `Mostra países até ${fmt(maxV)} ${unit} da cidade`;
 }
 
-rangeMin.addEventListener('change', applyBounds);
-rangeMax.addEventListener('change', applyBounds);
-rangeMin.addEventListener('blur', applyBounds);
-rangeMax.addEventListener('blur', applyBounds);
-
-radiusRange.addEventListener('input', () => {
-  radiusInput.value = radiusRange.value;
+radiusMin.addEventListener('input', syncRangeHint);
+radiusMax.addEventListener('input', syncRangeHint);
+radiusMin.addEventListener('blur', () => {
+  const { minV, maxV } = getRadiusBounds();
+  radiusMin.value = minV;
+  radiusMax.value = maxV;
+  syncRangeHint();
 });
-radiusInput.addEventListener('input', () => {
-  const minV = parseInt(rangeMin.value) || 100;
-  const maxV = parseInt(rangeMax.value) || 20000;
-  const v = Math.min(maxV, Math.max(minV, parseInt(radiusInput.value) || minV));
-  radiusRange.value = v;
+radiusMax.addEventListener('blur', () => {
+  const { minV, maxV } = getRadiusBounds();
+  radiusMin.value = minV;
+  radiusMax.value = maxV;
+  syncRangeHint();
 });
-
-unitSelect.addEventListener('change', () => { syncRangeLabels(); });
-syncRangeLabels();
+unitSelect.addEventListener('change', syncRangeHint);
+syncRangeHint();
 
 // ── AUTOCOMPLETE ──────────────────────────────────────────────────
 cityInput.addEventListener('input', () => {
@@ -719,8 +685,10 @@ async function doSearch() {
   const cityName = cityInput.value.trim();
   if (!cityName) { showToast('Informe uma cidade de origem'); return; }
 
-  let radiusKm = parseInt(radiusInput.value) || 2000;
-  if (unitSelect.value === 'mi') radiusKm = Math.round(radiusKm * 1.60934);
+  const { minV, maxV } = getRadiusBounds();
+  const toKm = v => unitSelect.value === 'mi' ? v * 1.60934 : v;
+  const minKm = toKm(minV);
+  const maxKm = toKm(maxV);
 
   btnSearch.disabled = true;
   setLoading(true, originCoords ? 'Calculando países…' : 'Buscando localização…');
@@ -744,13 +712,20 @@ async function doSearch() {
     }).addTo(map).bindPopup(`<div class="popup-content"><p class="popup-name">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Prévia — salve como pin para fixar</p></div>`);
 
     radiusCircle = L.circle([originCoords.lat, originCoords.lng], {
-      radius: radiusKm*1000, color: col.color, fillColor: col.color,
+      radius: maxKm*1000, color: col.color, fillColor: col.color,
       fillOpacity: 0.06, weight: 2, dashArray: '6 4'
     }).addTo(map);
 
+    if (minKm > 0) {
+      innerCircle = L.circle([originCoords.lat, originCoords.lng], {
+        radius: minKm*1000, color: col.color, fillColor: '#ffffff',
+        fillOpacity: 0.55, weight: 1.5, dashArray: '3 4'
+      }).addTo(map);
+    }
+
     const found = COUNTRIES
       .map(c => ({ ...c, dist: Math.round(haversine(originCoords.lat, originCoords.lng, c.lat, c.lng)) }))
-      .filter(c => c.dist <= radiusKm)
+      .filter(c => c.dist >= minKm && c.dist <= maxKm)
       .sort((a,b) => a.dist - b.dist);
 
     found.forEach(c => {
@@ -772,7 +747,7 @@ async function doSearch() {
     countBadge.textContent = found.length;
     countBadge.style.display = found.length ? 'inline-block' : 'none';
     resultsTitle.textContent = 'Resultados';
-    if (!found.length) showToast('Nenhum país encontrado nesse raio.');
+    if (!found.length) showToast('Nenhum país encontrado nessa faixa.');
 
   } catch(err) {
     showToast('Erro ao buscar. Verifique sua conexão.');
@@ -786,6 +761,7 @@ async function doSearch() {
 function clearCurrentLayers() {
   if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
   if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
+  if (innerCircle) { map.removeLayer(innerCircle); innerCircle = null; }
   countryMarkers.forEach(m => map.removeLayer(m));
   countryMarkers = [];
 }
@@ -799,9 +775,11 @@ async function savePin() {
   const cityName = cityInput.value.trim();
   if (!cityName) { showToast('Informe uma cidade primeiro'); return; }
 
-  let radiusKm = parseInt(radiusInput.value) || 2000;
+  const { minV, maxV } = getRadiusBounds();
   const unit = unitSelect.value;
-  if (unit === 'mi') radiusKm = Math.round(radiusKm * 1.60934);
+  const toKm = v => unit === 'mi' ? v * 1.60934 : v;
+  const minKm = toKm(minV);
+  const maxKm = toKm(maxV);
 
   btnPin.disabled = true;
   setLoading(true, originCoords ? 'Salvando pin…' : 'Buscando localização…');
@@ -816,6 +794,10 @@ async function savePin() {
     const id = Date.now();
     const coords = { ...originCoords };
 
+    const rangeLabel = minV > 0
+      ? `${minV.toLocaleString('pt-BR')}–${maxV.toLocaleString('pt-BR')} ${unit}`
+      : `até ${maxV.toLocaleString('pt-BR')} ${unit}`;
+
     // Build map layers for this pin
     const pinOriginMarker = L.marker([coords.lat, coords.lng], {
       icon: L.divIcon({
@@ -824,16 +806,24 @@ async function savePin() {
         iconSize:[14,14], iconAnchor:[7,7]
       })
     }).addTo(map);
-    pinOriginMarker.bindPopup(`<div class="popup-content"><p class="popup-name" style="color:${col.color}">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Pin salvo · ${radiusKm} km</p></div>`);
+    pinOriginMarker.bindPopup(`<div class="popup-content"><p class="popup-name" style="color:${col.color}">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Pin salvo · ${rangeLabel}</p></div>`);
 
     const pinCircle = L.circle([coords.lat, coords.lng], {
-      radius: radiusKm*1000, color: col.color, fillColor: col.color,
+      radius: maxKm*1000, color: col.color, fillColor: col.color,
       fillOpacity: 0.07, weight: 2, dashArray: '5 4'
     }).addTo(map);
 
+    let pinInnerCircle = null;
+    if (minKm > 0) {
+      pinInnerCircle = L.circle([coords.lat, coords.lng], {
+        radius: minKm*1000, color: col.color, fillColor: '#ffffff',
+        fillOpacity: 0.55, weight: 1.5, dashArray: '3 4'
+      }).addTo(map);
+    }
+
     const found = COUNTRIES
       .map(c => ({ ...c, dist: Math.round(haversine(coords.lat, coords.lng, c.lat, c.lng)) }))
-      .filter(c => c.dist <= radiusKm)
+      .filter(c => c.dist >= minKm && c.dist <= maxKm)
       .sort((a,b) => a.dist - b.dist);
 
     const pinCountryMarkers = [];
@@ -853,8 +843,8 @@ async function savePin() {
     // Remove preview layers (they're now replaced by pin layers)
     clearCurrentLayers();
 
-    const pin = { id, label: cityName, coords, radiusKm, unit, color: col.color, lightColor: col.light,
-      mapLayers: { marker: pinOriginMarker, circle: pinCircle, countryMarkers: pinCountryMarkers }, found };
+    const pin = { id, label: cityName, coords, minKm: minV, maxKm: maxV, unit, color: col.color, lightColor: col.light,
+      mapLayers: { marker: pinOriginMarker, circle: pinCircle, innerCircle: pinInnerCircle, countryMarkers: pinCountryMarkers }, found };
     pins.push(pin);
 
     // Show in sidebar
@@ -883,6 +873,7 @@ function removePin(id, e) {
   const pin = pins[idx];
   map.removeLayer(pin.mapLayers.marker);
   map.removeLayer(pin.mapLayers.circle);
+  if (pin.mapLayers.innerCircle) map.removeLayer(pin.mapLayers.innerCircle);
   pin.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
   pins.splice(idx, 1);
   if (activePinId === id) {
@@ -912,15 +903,16 @@ function renderPinsList() {
   pinsCount.textContent = pins.length;
 
   pinsList.innerHTML = pins.map(p => {
-    const radiusLabel = p.unit === 'mi'
-      ? `${Math.round(p.radiusKm/1.60934).toLocaleString('pt-BR')} mi`
-      : `${p.radiusKm.toLocaleString('pt-BR')} km`;
+    const fmt = v => v.toLocaleString('pt-BR');
+    const rangeLabel = p.minKm > 0
+      ? `${fmt(p.minKm)}–${fmt(p.maxKm)} ${p.unit}`
+      : `até ${fmt(p.maxKm)} ${p.unit}`;
     const isActive = activePinId === p.id;
     return `<div class="pin-item ${isActive ? 'active-pin' : ''}" onclick="focusPin(${p.id})">
       <div class="pin-dot" style="background:${p.color}"></div>
       <div class="pin-label">
         <div class="pin-name">${p.label}</div>
-        <div class="pin-meta">${radiusLabel} · ${p.found.length} países</div>
+        <div class="pin-meta">${rangeLabel} · ${p.found.length} países</div>
       </div>
       <div class="pin-remove" onclick="removePin(${p.id},event)" title="Remover pin">
         <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
@@ -976,15 +968,17 @@ function resetMap() {
   pins.forEach(p => {
     map.removeLayer(p.mapLayers.marker);
     map.removeLayer(p.mapLayers.circle);
+    if (p.mapLayers.innerCircle) map.removeLayer(p.mapLayers.innerCircle);
     p.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
   });
   pins = [];
   activePinId = null;
   originCoords = null;
   cityInput.value = '';
-  radiusInput.value = '2000';
-  radiusRange.value = '2000';
-  resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e um raio para ver os países próximos.</p></div>`;
+  radiusMin.value = '0';
+  radiusMax.value = '2000';
+  syncRangeHint();
+  resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e a faixa de distância para ver os países.</p></div>`;
   countBadge.style.display = 'none';
   resultsTitle.textContent = 'Resultados';
   pinsSection.style.display = 'none';
