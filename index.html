@@ -80,6 +80,10 @@
   .pins-toggle.open svg { transform: rotate(180deg); }
   .pins-count { background: var(--teal); color: #fff; font-size: 0.68rem; font-weight: 500; padding: 1px 7px; border-radius: 10px; }
   .pins-list { padding: 0 0.75rem 0.65rem; display: none; }
+
+  .intersection-banner { display: flex; align-items: center; gap: 8px; margin: 0.7rem 1.25rem 0; padding: 0.55rem 0.7rem; background: var(--gold-light, #FDF3DC); border: 1px solid rgba(201,148,26,0.35); border-radius: 8px; }
+  .intersection-banner svg { width: 16px; height: 16px; stroke: #9A7110; fill: none; stroke-width: 2; flex-shrink: 0; }
+  .intersection-banner span { font-size: 0.76rem; color: #6B5106; line-height: 1.4; }
   .pins-list.show { display: block; }
   .pin-item { display: flex; align-items: center; gap: 8px; padding: 0.4rem 0.5rem; border-radius: 7px; cursor: pointer; transition: background 0.1s; margin-bottom: 2px; }
   .pin-item:hover { background: var(--cream); }
@@ -219,6 +223,12 @@
       <div class="pins-list" id="pins-list"></div>
     </div>
 
+    <!-- INTERSECTION BANNER -->
+    <div class="intersection-banner" id="intersection-banner" style="display:none">
+      <svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
+      <span>Mostrando a área comum entre todos os pins salvos</span>
+    </div>
+
     <!-- RESULTS -->
     <div class="results-header">
       <h3 id="results-title">Resultados</h3>
@@ -249,6 +259,7 @@
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script>
 const COUNTRIES = [
   {name:"Afeganistão",code:"AF",flag:"🇦🇫",capital:"Cabul",continent:"Ásia",lat:33.93911,lng:67.709953},
@@ -463,9 +474,11 @@ let searchTimeout = null;
 let geocodeCache = {};
 let lastQuery = '';
 
-// Pins: [{id, label, coords, radiusKm, unit, color, mapLayers: {marker, circle, countryMarkers[]}, found:[]}]
+// Pins: [{id, label, coords, minKm, maxKm, unit, color, mapLayers: {marker, circle, innerCircle, countryMarkers[]}, found:[]}]
 let pins = [];
 let activePinId = null; // which pin's countries are shown in sidebar
+let intersectionLayer = null; // highlighted overlap area on the map
+let intersectionMode = false; // true when 2+ pins exist and we're showing the overlap list
 
 // ── MAP INIT ─────────────────────────────────────────────────────
 map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
@@ -492,6 +505,7 @@ const pinsSection  = document.getElementById('pins-section');
 const pinsList     = document.getElementById('pins-list');
 const pinsCount    = document.getElementById('pins-count');
 const pinsToggle   = document.getElementById('pins-toggle');
+const intersectionBanner = document.getElementById('intersection-banner');
 
 // ── RADIUS MIN/MAX ────────────────────────────────────────────────
 function getRadiusBounds() {
@@ -742,12 +756,17 @@ async function doSearch() {
     });
 
     map.fitBounds(radiusCircle.getBounds(), { padding:[40,40] });
-    activePinId = null;
-    renderCountryList(found, cityName, null);
-    countBadge.textContent = found.length;
-    countBadge.style.display = found.length ? 'inline-block' : 'none';
-    resultsTitle.textContent = 'Resultados';
-    if (!found.length) showToast('Nenhum país encontrado nessa faixa.');
+    if (pins.length >= 2) {
+      // keep showing intersection list/highlight; preview circle is just informative
+      showToast('Pré-visualização — salve como pin para incluir na interseção');
+    } else {
+      activePinId = null;
+      renderCountryList(found, cityName, null);
+      countBadge.textContent = found.length;
+      countBadge.style.display = found.length ? 'inline-block' : 'none';
+      resultsTitle.textContent = 'Resultados';
+      if (!found.length) showToast('Nenhum país encontrado nessa faixa.');
+    }
 
   } catch(err) {
     showToast('Erro ao buscar. Verifique sua conexão.');
@@ -843,18 +862,14 @@ async function savePin() {
     // Remove preview layers (they're now replaced by pin layers)
     clearCurrentLayers();
 
-    const pin = { id, label: cityName, coords, minKm: minV, maxKm: maxV, unit, color: col.color, lightColor: col.light,
+    const pin = { id, label: cityName, coords, minKm, maxKm, minDisplay: minV, maxDisplay: maxV, unit, color: col.color, lightColor: col.light,
       mapLayers: { marker: pinOriginMarker, circle: pinCircle, innerCircle: pinInnerCircle, countryMarkers: pinCountryMarkers }, found };
     pins.push(pin);
 
     // Show in sidebar
     activePinId = id;
-    renderCountryList(found, cityName, col.color);
-    countBadge.textContent = found.length;
-    countBadge.style.display = found.length ? 'inline-block' : 'none';
-    resultsTitle.textContent = `${cityName}`;
-
     renderPinsList();
+    updateIntersection();
     map.fitBounds(pinCircle.getBounds(), { padding:[40,40] });
     showToast(`Pin "${cityName}" salvo!`);
 
@@ -876,25 +891,15 @@ function removePin(id, e) {
   if (pin.mapLayers.innerCircle) map.removeLayer(pin.mapLayers.innerCircle);
   pin.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
   pins.splice(idx, 1);
-  if (activePinId === id) {
-    activePinId = null;
-    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Pin removido</strong>Faça uma busca ou salve um novo pin.</p></div>`;
-    countBadge.style.display = 'none';
-    resultsTitle.textContent = 'Resultados';
-  }
+  if (activePinId === id) activePinId = null;
   renderPinsList();
+  updateIntersection();
 }
 
 function focusPin(id) {
   const pin = pins.find(p => p.id === id);
   if (!pin) return;
-  activePinId = id;
-  renderCountryList(pin.found, pin.label, pin.color);
-  countBadge.textContent = pin.found.length;
-  countBadge.style.display = pin.found.length ? 'inline-block' : 'none';
-  resultsTitle.textContent = pin.label;
   map.fitBounds(pin.mapLayers.circle.getBounds(), { padding:[40,40] });
-  renderPinsList();
 }
 
 function renderPinsList() {
@@ -904,11 +909,10 @@ function renderPinsList() {
 
   pinsList.innerHTML = pins.map(p => {
     const fmt = v => v.toLocaleString('pt-BR');
-    const rangeLabel = p.minKm > 0
-      ? `${fmt(p.minKm)}–${fmt(p.maxKm)} ${p.unit}`
-      : `até ${fmt(p.maxKm)} ${p.unit}`;
-    const isActive = activePinId === p.id;
-    return `<div class="pin-item ${isActive ? 'active-pin' : ''}" onclick="focusPin(${p.id})">
+    const rangeLabel = p.minDisplay > 0
+      ? `${fmt(p.minDisplay)}–${fmt(p.maxDisplay)} ${p.unit}`
+      : `até ${fmt(p.maxDisplay)} ${p.unit}`;
+    return `<div class="pin-item" onclick="focusPin(${p.id})">
       <div class="pin-dot" style="background:${p.color}"></div>
       <div class="pin-label">
         <div class="pin-name">${p.label}</div>
@@ -921,6 +925,133 @@ function renderPinsList() {
   }).join('');
 }
 
+// ── INTERSECTION (overlap of all pin rings) ─────────────────────────
+function pinRingPolygon(pin) {
+  // Build a ring polygon (annulus) as a turf feature. If minKm is 0, it's a filled circle.
+  const center = [pin.coords.lng, pin.coords.lat];
+  const outer = turf.circle(center, pin.maxKm, { steps: 96, units: 'kilometers' });
+  if (pin.minKm > 0) {
+    const inner = turf.circle(center, pin.minKm, { steps: 96, units: 'kilometers' });
+    try {
+      return turf.difference(outer, inner);
+    } catch {
+      return outer;
+    }
+  }
+  return outer;
+}
+
+function computeIntersectionPolygon() {
+  if (pins.length < 2) return null;
+  let acc = pinRingPolygon(pins[0]);
+  for (let i = 1; i < pins.length; i++) {
+    if (!acc) return null;
+    const ring = pinRingPolygon(pins[i]);
+    try {
+      acc = turf.intersect(acc, ring);
+    } catch {
+      return null;
+    }
+    if (!acc) return null;
+  }
+  return acc;
+}
+
+function clearIntersectionLayer() {
+  if (intersectionLayer) { map.removeLayer(intersectionLayer); intersectionLayer = null; }
+}
+
+function updateIntersection() {
+  clearIntersectionLayer();
+
+  if (pins.length < 2) {
+    intersectionMode = false;
+    intersectionBanner.style.display = 'none';
+    if (pins.length === 1) {
+      // single pin: show its own list
+      const p = pins[0];
+      renderCountryList(p.found, p.label, p.color);
+      countBadge.textContent = p.found.length;
+      countBadge.style.display = p.found.length ? 'inline-block' : 'none';
+      resultsTitle.textContent = p.label;
+    } else {
+      resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e a faixa de distância para ver os países.</p></div>`;
+      countBadge.style.display = 'none';
+      resultsTitle.textContent = 'Resultados';
+    }
+    return;
+  }
+
+  intersectionMode = true;
+  intersectionBanner.style.display = 'flex';
+  const poly = computeIntersectionPolygon();
+
+  if (!poly) {
+    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem interseção</strong>As áreas dos pins salvos não se sobrepõem.</p></div>`;
+    countBadge.style.display = 'none';
+    resultsTitle.textContent = 'Interseção';
+    return;
+  }
+
+  // Draw the intersection polygon, highlighted
+  intersectionLayer = L.geoJSON(poly, {
+    style: {
+      color: '#1C1A17',
+      weight: 2.5,
+      fillColor: '#E8B400',
+      fillOpacity: 0.32,
+      dashArray: null
+    }
+  }).addTo(map);
+  intersectionLayer.bringToFront();
+
+  // Filter countries: must be inside EVERY pin's ring (min/max)
+  const found = COUNTRIES
+    .map(c => {
+      const dists = pins.map(p => Math.round(haversine(p.coords.lat, p.coords.lng, c.lat, c.lng)));
+      const inAll = pins.every((p, i) => dists[i] >= p.minKm && dists[i] <= p.maxKm);
+      return { ...c, dists, inAll, dist: Math.min(...dists) };
+    })
+    .filter(c => c.inAll)
+    .sort((a,b) => a.dist - b.dist);
+
+  renderIntersectionList(found);
+  countBadge.textContent = found.length;
+  countBadge.style.display = found.length ? 'inline-block' : 'none';
+  resultsTitle.textContent = 'Interseção';
+  if (!found.length) showToast('Nenhum país na área de interseção.');
+
+  try {
+    map.fitBounds(intersectionLayer.getBounds(), { padding:[40,40] });
+  } catch {}
+}
+
+function renderIntersectionList(countries) {
+  if (!countries.length) {
+    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Nenhum país cai na área comum entre os pins.</p></div>`;
+    return;
+  }
+  resultsList.innerHTML = countries.map(c => {
+    const distParts = pins.map((p, i) => {
+      const d = c.dists[i];
+      const dl = p.unit === 'mi' ? `${Math.round(d/1.60934)} mi` : `${d} km`;
+      return `<span style="color:${p.color}">●</span> ${dl}`;
+    }).join('  ');
+    return `<div class="country-item" onclick="focusCountryByCoords(${c.lat},${c.lng})" title="${c.name}">
+      <span class="flag">${c.flag}</span>
+      <div class="country-info">
+        <div class="country-name">${c.name}</div>
+        <div class="country-dist">${distParts}</div>
+      </div>
+      <span class="country-cont">${c.continent}</span>
+    </div>`;
+  }).join('');
+}
+
+function focusCountryByCoords(lat, lng) {
+  map.setView([lat, lng], 5, { animate: true });
+}
+
 function togglePins() {
   const list = document.getElementById('pins-list');
   const toggle = document.getElementById('pins-toggle');
@@ -931,17 +1062,17 @@ function togglePins() {
 // ── COUNTRY LIST RENDER ───────────────────────────────────────────
 function renderCountryList(countries, cityName, accentColor) {
   if (!countries.length) {
-    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Tente aumentar o raio ou escolher outra cidade.</p></div>`;
+    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Tente aumentar a faixa ou escolher outra cidade.</p></div>`;
     return;
   }
   const unit = unitSelect.value;
   const activePin = activePinId ? pins.find(p => p.id === activePinId) : null;
   const pinUnit = activePin ? activePin.unit : unit;
-  resultsList.innerHTML = countries.map((c, i) => {
+  resultsList.innerHTML = countries.map((c) => {
     const distLabel = pinUnit === 'mi'
       ? `${Math.round(c.dist/1.60934).toLocaleString('pt-BR')} mi`
       : `${c.dist.toLocaleString('pt-BR')} km`;
-    return `<div class="country-item" onclick="focusCountryOnMap(${i})" title="${c.name}">
+    return `<div class="country-item" onclick="focusCountryByCoords(${c.lat},${c.lng})" title="${c.name}">
       <span class="flag">${c.flag}</span>
       <div class="country-info">
         <div class="country-name">${c.name}</div>
@@ -952,18 +1083,12 @@ function renderCountryList(countries, cityName, accentColor) {
   }).join('');
 }
 
-function focusCountryOnMap(i) {
-  // Determine which markers to use: active pin or preview
-  const activePin = activePinId ? pins.find(p => p.id === activePinId) : null;
-  const markers = activePin ? activePin.mapLayers.countryMarkers : countryMarkers;
-  if (!markers[i]) return;
-  map.setView(markers[i].getLatLng(), 5, { animate: true });
-  markers[i].openPopup();
-}
-
 // ── RESET ─────────────────────────────────────────────────────────
 function resetMap() {
   clearCurrentLayers();
+  clearIntersectionLayer();
+  intersectionMode = false;
+  intersectionBanner.style.display = 'none';
   // Remove all pins from map
   pins.forEach(p => {
     map.removeLayer(p.mapLayers.marker);
@@ -992,7 +1117,7 @@ window.focusPin = focusPin;
 window.removePin = removePin;
 window.togglePins = togglePins;
 window.resetMap = resetMap;
-window.focusCountryOnMap = focusCountryOnMap;
+window.focusCountryByCoords = focusCountryByCoords;
 </script>
 </body>
 </html>
