@@ -3,272 +3,234 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Radius Explorer — Países ao redor do mundo</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<title>Radius Explorer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#F7F4EF;--ink:#1C1A17;--ink-m:#6B6860;--ink-f:#B0ADA7;
+  --teal:#1D6B5C;--teal-l:#E2F0ED;
+  --gold:#C9941A;--gold-l:#FDF3DC;
+  --border:rgba(28,26,23,.12);--border-s:rgba(28,26,23,.25);
+  --r:10px;--sh:0 2px 12px rgba(28,26,23,.08);--sh-l:0 8px 32px rgba(28,26,23,.12)
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;display:flex;flex-direction:column}
+header{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem;background:#fff;flex-shrink:0}
+.logo{width:32px;height:32px;background:var(--teal);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+header h1{font-family:'DM Serif Display',serif;font-size:1.1rem;font-weight:400}
+header span{font-size:.78rem;color:var(--ink-m);margin-left:.4rem}
+.layout{display:grid;grid-template-columns:320px 1fr;flex:1;min-height:0;height:calc(100vh - 56px)}
+.sidebar{background:#fff;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.controls{padding:1.25rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.controls h2{font-family:'DM Serif Display',serif;font-size:.95rem;font-weight:400;margin-bottom:1rem}
+.field{margin-bottom:.85rem}
+.field label{display:block;font-size:.72rem;font-weight:500;color:var(--ink-m);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.35rem}
+.iw{position:relative}
+.iw>svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--ink-f);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.iw input{width:100%;padding:.5rem .65rem .5rem 2.1rem;border:1px solid var(--border-s);border-radius:var(--r);font-family:inherit;font-size:.87rem;color:var(--ink);background:var(--cream);outline:none;transition:border-color .15s,background .15s}
+.iw input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(29,107,92,.1)}
+.ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid var(--border-s);border-radius:var(--r);box-shadow:var(--sh-l);z-index:1000;max-height:200px;overflow-y:auto;display:none}
+.ac-list.show{display:block}
+.ac-item{padding:.5rem .75rem;cursor:pointer;border-bottom:1px solid var(--border);transition:background .1s;display:flex;align-items:flex-start;gap:8px}
+.ac-item:last-child{border-bottom:none}
+.ac-item:hover,.ac-item.active{background:var(--teal-l)}
 
-  :root {
-    --cream: #F7F4EF;
-    --ink: #1C1A17;
-    --ink-muted: #6B6860;
-    --ink-faint: #B0ADA7;
-    --teal: #1D6B5C;
-    --teal-light: #E2F0ED;
-    --border: rgba(28,26,23,0.12);
-    --border-strong: rgba(28,26,23,0.25);
-    --radius: 10px;
-    --shadow: 0 2px 12px rgba(28,26,23,0.08);
-    --shadow-lg: 0 8px 32px rgba(28,26,23,0.12);
-  }
+/* radius range */
+.range-row{display:grid;grid-template-columns:1fr auto 1fr auto;gap:.4rem;align-items:center}
+.range-dash{color:var(--ink-f);font-size:.85rem;text-align:center}
+.unit-sel{padding:.5rem 1.4rem .5rem .5rem;border:1px solid var(--border-s);border-radius:var(--r);font-family:inherit;font-size:.84rem;color:var(--ink);background:var(--cream) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236B6860' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 5px center;outline:none;cursor:pointer;appearance:none}
+.unit-sel:focus{border-color:var(--teal)}
+.field-hint{font-size:.72rem;color:var(--ink-m);margin-top:.4rem;line-height:1.4}
 
-  body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; display: flex; flex-direction: column; }
+/* no input border icon */
+.bare-input{width:100%;padding:.5rem .65rem;border:1px solid var(--border-s);border-radius:var(--r);font-family:inherit;font-size:.87rem;color:var(--ink);background:var(--cream);outline:none;text-align:center;transition:border-color .15s,background .15s}
+.bare-input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(29,107,92,.1)}
 
-  header { padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.85rem; background: #fff; flex-shrink: 0; }
-  .logo-mark { width: 32px; height: 32px; background: var(--teal); border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-  .logo-mark svg { width: 18px; height: 18px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  header h1 { font-family: 'DM Serif Display', serif; font-size: 1.1rem; font-weight: 400; letter-spacing: -0.01em; }
-  header span { font-size: 0.78rem; color: var(--ink-muted); margin-left: 0.4rem; }
+/* buttons */
+.btn-row{display:grid;grid-template-columns:1fr auto;gap:.4rem;margin-top:.2rem}
+.btn-search{padding:.6rem;background:var(--teal);color:#fff;border:none;border-radius:var(--r);font-family:inherit;font-size:.87rem;font-weight:500;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center;gap:.4rem}
+.btn-search:hover{background:#155249}
+.btn-search:disabled{background:var(--ink-f);cursor:not-allowed}
+.btn-search svg{width:15px;height:15px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-pin{padding:.6rem .75rem;background:#fff;color:var(--teal);border:1.5px solid var(--teal);border-radius:var(--r);font-family:inherit;font-size:.82rem;font-weight:500;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.btn-pin:hover{background:var(--teal-l)}
+.btn-pin:disabled{opacity:.5;cursor:not-allowed}
+.btn-pin svg{width:14px;height:14px;stroke:var(--teal);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 
-  .layout { display: grid; grid-template-columns: 320px 1fr; flex: 1; min-height: 0; height: calc(100vh - 56px); }
+/* pins section */
+.pins-sec{border-bottom:1px solid var(--border);flex-shrink:0}
+.pins-hdr{padding:.6rem 1.25rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.pins-hdr h3{font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-m)}
+.pins-tog{display:flex;align-items:center;gap:6px}
+.pins-tog svg{width:13px;height:13px;stroke:var(--ink-f);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.pins-tog.open svg{transform:rotate(180deg)}
+.pin-count{background:var(--teal);color:#fff;font-size:.68rem;font-weight:500;padding:1px 7px;border-radius:10px}
+.pins-list{padding:0 .75rem .6rem;display:none}
+.pins-list.show{display:block}
+.pin-item{display:flex;align-items:center;gap:8px;padding:.4rem .5rem;border-radius:7px;cursor:pointer;transition:background .1s;margin-bottom:2px}
+.pin-item:hover{background:var(--cream)}
+.pin-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.pin-label{flex:1;min-width:0}
+.pin-name{font-size:.82rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pin-meta{font-size:.7rem;color:var(--ink-m);margin-top:1px}
+.pin-rm{width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:background .1s;flex-shrink:0}
+.pin-rm:hover{background:rgba(200,50,50,.1)}
+.pin-rm svg{width:12px;height:12px;stroke:var(--ink-f);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pin-rm:hover svg{stroke:#c83232}
 
-  .sidebar { background: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+/* intersection banner */
+.ix-banner{display:flex;align-items:center;gap:8px;margin:.65rem 1.25rem 0;padding:.5rem .7rem;background:var(--gold-l);border:1px solid rgba(201,148,26,.35);border-radius:8px}
+.ix-banner svg{width:16px;height:16px;stroke:#9A7110;fill:none;stroke-width:2;flex-shrink:0}
+.ix-banner span{font-size:.74rem;color:#6B5106;line-height:1.4}
 
-  .controls { padding: 1.25rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .controls h2 { font-family: 'DM Serif Display', serif; font-size: 0.95rem; font-weight: 400; color: var(--ink); margin-bottom: 1rem; }
+/* results */
+.res-hdr{padding:.7rem 1.25rem .4rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.res-hdr h3{font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-m)}
+.badge{background:var(--teal);color:#fff;font-size:.7rem;font-weight:500;padding:2px 8px;border-radius:10px;display:none}
+.res-list{flex:1;overflow-y:auto;padding:0 .75rem 1rem}
+.res-list::-webkit-scrollbar{width:3px}
+.res-list::-webkit-scrollbar-thumb{background:var(--border-s);border-radius:3px}
+.country-item{display:flex;align-items:center;gap:.6rem;padding:.55rem .65rem;border-radius:7px;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--border)}
+.country-item:last-child{border-bottom:none}
+.country-item:hover{background:var(--teal-l)}
+.flag{font-size:1.25rem;line-height:1;flex-shrink:0;width:26px;text-align:center}
+.ci{flex:1;min-width:0}
+.cname{font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cdist{font-size:.72rem;color:var(--ink-m);margin-top:1px}
+.ccont{font-size:.68rem;color:var(--ink-f);background:var(--cream);padding:2px 6px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.empty{text-align:center;padding:2rem 1rem;color:var(--ink-f)}
+.empty svg{width:36px;height:36px;stroke:var(--ink-f);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.6rem}
+.empty p{font-size:.82rem;line-height:1.5}
+.empty strong{display:block;color:var(--ink-m);margin-bottom:3px}
 
-  .field { margin-bottom: 0.85rem; }
-  .field label { display: block; font-size: 0.72rem; font-weight: 500; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 0.35rem; }
-
-  .input-wrap { position: relative; }
-  .input-wrap > svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; stroke: var(--ink-faint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
-  .input-wrap input { width: 100%; padding: 0.5rem 0.65rem 0.5rem 2.1rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: inherit; font-size: 0.87rem; color: var(--ink); background: var(--cream); outline: none; transition: border-color 0.15s, background 0.15s; }
-  .input-wrap input:focus { border-color: var(--teal); background: #fff; box-shadow: 0 0 0 3px rgba(29,107,92,0.1); }
-
-  .autocomplete-list { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: #fff; border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 1000; max-height: 220px; overflow-y: auto; display: none; }
-  .autocomplete-list.show { display: block; }
-  .autocomplete-item { padding: 0.5rem 0.75rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; display: flex; align-items: flex-start; gap: 8px; }
-  .autocomplete-item:last-child { border-bottom: none; }
-  .autocomplete-item:hover, .autocomplete-item.active { background: var(--teal-light); }
-
-  /* Radius min/max controls */
-  .radius-minmax-row { display: grid; grid-template-columns: 1fr auto 1fr auto; gap: 0.4rem; align-items: center; }
-  .radius-dash { color: var(--ink-faint); font-size: 0.85rem; }
-  .field-hint { font-size: 0.72rem; color: var(--ink-muted); margin-top: 0.4rem; line-height: 1.4; }
-  .unit-select { padding: 0.5rem 1.4rem 0.5rem 0.5rem; border: 1px solid var(--border-strong); border-radius: var(--radius); font-family: inherit; font-size: 0.84rem; color: var(--ink); background: var(--cream); outline: none; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%236B6860' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 5px center; transition: border-color 0.15s; }
-  .unit-select:focus { border-color: var(--teal); }
-
-  .btn-row { display: grid; grid-template-columns: 1fr auto; gap: 0.4rem; margin-top: 0.2rem; }
-  .btn-search { padding: 0.6rem; background: var(--teal); color: #fff; border: none; border-radius: var(--radius); font-family: inherit; font-size: 0.87rem; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; justify-content: center; gap: 0.4rem; }
-  .btn-search:hover { background: #155249; }
-  .btn-search:active { transform: scale(0.98); }
-  .btn-search:disabled { background: var(--ink-faint); cursor: not-allowed; }
-  .btn-search svg { width: 15px; height: 15px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-  .btn-pin { padding: 0.6rem 0.75rem; background: #fff; color: var(--teal); border: 1.5px solid var(--teal); border-radius: var(--radius); font-family: inherit; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: background 0.15s, transform 0.1s; display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-  .btn-pin:hover { background: var(--teal-light); }
-  .btn-pin:active { transform: scale(0.97); }
-  .btn-pin svg { width: 14px; height: 14px; stroke: var(--teal); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
-
-  /* Pins list in sidebar */
-  .pins-section { border-bottom: 1px solid var(--border); flex-shrink: 0; }
-  .pins-header { padding: 0.65rem 1.25rem; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
-  .pins-header h3 { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
-  .pins-toggle { display: flex; align-items: center; gap: 6px; }
-  .pins-toggle svg { width: 13px; height: 13px; stroke: var(--ink-faint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: transform 0.2s; }
-  .pins-toggle.open svg { transform: rotate(180deg); }
-  .pins-count { background: var(--teal); color: #fff; font-size: 0.68rem; font-weight: 500; padding: 1px 7px; border-radius: 10px; }
-  .pins-list { padding: 0 0.75rem 0.65rem; display: none; }
-
-  .intersection-banner { display: flex; align-items: center; gap: 8px; margin: 0.7rem 1.25rem 0; padding: 0.55rem 0.7rem; background: var(--gold-light, #FDF3DC); border: 1px solid rgba(201,148,26,0.35); border-radius: 8px; }
-  .intersection-banner svg { width: 16px; height: 16px; stroke: #9A7110; fill: none; stroke-width: 2; flex-shrink: 0; }
-  .intersection-banner span { font-size: 0.76rem; color: #6B5106; line-height: 1.4; }
-  .pins-list.show { display: block; }
-  .pin-item { display: flex; align-items: center; gap: 8px; padding: 0.4rem 0.5rem; border-radius: 7px; cursor: pointer; transition: background 0.1s; margin-bottom: 2px; }
-  .pin-item:hover { background: var(--cream); }
-  .pin-item.active-pin { background: var(--teal-light); }
-  .pin-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .pin-label { flex: 1; min-width: 0; }
-  .pin-name { font-size: 0.82rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .pin-meta { font-size: 0.7rem; color: var(--ink-muted); margin-top: 1px; }
-  .pin-remove { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; border-radius: 4px; transition: background 0.1s; flex-shrink: 0; }
-  .pin-remove:hover { background: rgba(200,50,50,0.1); }
-  .pin-remove svg { width: 12px; height: 12px; stroke: var(--ink-faint); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-  .pin-remove:hover svg { stroke: #c83232; }
-
-  /* Results */
-  .results-header { padding: 0.75rem 1.25rem 0.4rem; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
-  .results-header h3 { font-size: 0.72rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-muted); }
-  .count-badge { background: var(--teal); color: #fff; font-size: 0.7rem; font-weight: 500; padding: 2px 8px; border-radius: 10px; display: none; }
-  .results-list { flex: 1; overflow-y: auto; padding: 0 0.75rem 1rem; }
-  .results-list::-webkit-scrollbar { width: 3px; }
-  .results-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
-
-  .country-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.65rem; border-radius: 7px; cursor: pointer; transition: background 0.12s; border-bottom: 1px solid var(--border); }
-  .country-item:last-child { border-bottom: none; }
-  .country-item:hover { background: var(--teal-light); }
-  .flag { font-size: 1.25rem; line-height: 1; flex-shrink: 0; width: 26px; text-align: center; }
-  .country-info { flex: 1; min-width: 0; }
-  .country-name { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .country-dist { font-size: 0.72rem; color: var(--ink-muted); margin-top: 1px; }
-  .country-cont { font-size: 0.68rem; color: var(--ink-faint); background: var(--cream); padding: 2px 6px; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
-
-  .empty-state { text-align: center; padding: 2rem 1rem; color: var(--ink-faint); }
-  .empty-state svg { width: 36px; height: 36px; stroke: var(--ink-faint); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; margin-bottom: 0.6rem; }
-  .empty-state p { font-size: 0.82rem; line-height: 1.5; }
-  .empty-state p strong { display: block; color: var(--ink-muted); margin-bottom: 3px; }
-
-  /* Map */
-  .map-wrap { position: relative; }
-  #map { width: 100%; height: 100%; background: #D6E4F0; }
-  .map-overlay { position: absolute; bottom: 1rem; right: 1rem; z-index: 500; display: flex; flex-direction: column; gap: 0.4rem; }
-  .map-btn { width: 34px; height: 34px; background: #fff; border: 1px solid var(--border-strong); border-radius: 7px; box-shadow: var(--shadow); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.12s; }
-  .map-btn:hover { background: var(--teal-light); }
-  .map-btn svg { width: 15px; height: 15px; stroke: var(--ink-muted); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-  .loading-spinner { display: none; position: absolute; inset: 0; background: rgba(247,244,239,0.8); z-index: 600; align-items: center; justify-content: center; flex-direction: column; gap: 0.65rem; }
-  .loading-spinner.show { display: flex; }
-  .spinner-ring { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-spinner p { font-size: 0.82rem; color: var(--ink-muted); }
-
-  .toast { position: fixed; bottom: 1.25rem; left: 50%; transform: translateX(-50%) translateY(70px); background: var(--ink); color: #fff; padding: 0.55rem 1.1rem; border-radius: 7px; font-size: 0.82rem; z-index: 9999; transition: transform 0.22s ease; white-space: nowrap; }
-  .toast.show { transform: translateX(-50%) translateY(0); }
-
-  .leaflet-popup-content-wrapper { border-radius: 8px !important; box-shadow: var(--shadow-lg) !important; font-family: 'DM Sans', sans-serif; border: 1px solid var(--border); }
-  .popup-content { padding: 3px 1px; }
-  .popup-flag { font-size: 1.5rem; margin-bottom: 3px; display: block; }
-  .popup-name { font-weight: 500; font-size: 0.87rem; color: var(--ink); }
-  .popup-capital { font-size: 0.75rem; color: var(--ink-muted); margin-top: 2px; }
-  .popup-dist { font-size: 0.75rem; font-weight: 500; margin-top: 3px; }
-
-  @media (max-width: 768px) {
-    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; height: auto; }
-    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
-    .map-wrap { height: 50vh; }
-    header { padding: 0.85rem 1rem; }
-    .radius-minmax-row { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; row-gap: 0.4rem; }
-    .radius-dash { display: none; }
-    .unit-select { grid-column: 1 / -1; }
-  }
+/* map */
+.map-wrap{position:relative}
+#map{width:100%;height:100%;background:#D6E4F0}
+.map-btns{position:absolute;bottom:1rem;right:1rem;z-index:500;display:flex;flex-direction:column;gap:.4rem}
+.map-btn{width:34px;height:34px;background:#fff;border:1px solid var(--border-s);border-radius:7px;box-shadow:var(--sh);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
+.map-btn:hover{background:var(--teal-l)}
+.map-btn svg{width:15px;height:15px;stroke:var(--ink-m);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.spinner-wrap{display:none;position:absolute;inset:0;background:rgba(247,244,239,.8);z-index:600;align-items:center;justify-content:center;flex-direction:column;gap:.65rem}
+.spinner-wrap.show{display:flex}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+.spinner-wrap p{font-size:.82rem;color:var(--ink-m)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%) translateY(70px);background:var(--ink);color:#fff;padding:.55rem 1.1rem;border-radius:7px;font-size:.82rem;z-index:9999;transition:transform .22s ease;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.leaflet-popup-content-wrapper{border-radius:8px!important;box-shadow:var(--sh-l)!important;font-family:'DM Sans',sans-serif;border:1px solid var(--border)}
+.pc{padding:3px 1px}
+.pf{font-size:1.4rem;margin-bottom:3px;display:block}
+.pn{font-weight:500;font-size:.87rem;color:var(--ink)}
+.pk{font-size:.75rem;color:var(--ink-m);margin-top:2px}
+.pd{font-size:.75rem;font-weight:500;margin-top:3px}
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr;grid-template-rows:auto 1fr;height:auto}
+  .sidebar{border-right:none;border-bottom:1px solid var(--border)}
+  .map-wrap{height:50vh}
+  header{padding:.85rem 1rem}
+  .range-row{grid-template-columns:1fr 1fr;grid-template-rows:auto auto;row-gap:.4rem}
+  .range-dash{display:none}
+  .unit-sel{grid-column:1/-1}
+}
 </style>
 </head>
 <body>
-
 <header>
-  <div class="logo-mark">
-    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-  </div>
+  <div class="logo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
   <h1>Radius Explorer <span>— países dentro de um raio</span></h1>
 </header>
-
 <div class="layout">
   <aside class="sidebar">
-
-    <!-- CONTROLS -->
     <div class="controls">
       <h2>Definir área de busca</h2>
-
       <div class="field">
         <label>Cidade de origem</label>
-        <div class="input-wrap" style="position:relative">
+        <div class="iw" style="position:relative">
           <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          <input type="text" id="city-input" placeholder="Ex: São Paulo, Brasil" autocomplete="off" />
-          <div class="autocomplete-list" id="autocomplete"></div>
+          <input type="text" id="city-input" placeholder="Ex: São Paulo, Brasil" autocomplete="off"/>
+          <div class="ac-list" id="autocomplete"></div>
         </div>
       </div>
-
       <div class="field">
         <label>Faixa de distância</label>
-        <div class="radius-minmax-row">
-          <div class="input-wrap">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            <input type="number" id="radius-min" value="0" min="0" placeholder="Mín" />
-          </div>
-          <span class="radius-dash">—</span>
-          <div class="input-wrap">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-            <input type="number" id="radius-max" value="2000" min="1" placeholder="Máx" />
-          </div>
-          <select class="unit-select" id="unit-select">
+        <div class="range-row">
+          <input type="number" class="bare-input" id="r-min" value="0" min="0" placeholder="Mín"/>
+          <div class="range-dash">—</div>
+          <input type="number" class="bare-input" id="r-max" value="2000" min="1" placeholder="Máx"/>
+          <select class="unit-sel" id="unit-sel">
             <option value="km">km</option>
             <option value="mi">mi</option>
           </select>
         </div>
-        <p class="field-hint" id="range-hint">Mostra países entre 0 e 2.000 km da cidade</p>
+        <p class="field-hint" id="range-hint">Mostra países até 2.000 km da cidade</p>
       </div>
-
       <div class="btn-row">
         <button class="btn-search" id="btn-search" onclick="doSearch()">
           <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          Buscar países
+          Pré-visualizar
         </button>
-        <button class="btn-pin" id="btn-pin" onclick="savePin()" title="Salvar como pin">
+        <button class="btn-pin" id="btn-pin" onclick="savePin()">
           <svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
           Pin
         </button>
       </div>
     </div>
 
-    <!-- PINS -->
-    <div class="pins-section" id="pins-section" style="display:none">
-      <div class="pins-header" onclick="togglePins()">
+    <div class="pins-sec" id="pins-sec" style="display:none">
+      <div class="pins-hdr" onclick="togglePins()">
         <h3>Pins salvos</h3>
-        <div class="pins-toggle" id="pins-toggle">
-          <span class="pins-count" id="pins-count">0</span>
+        <div class="pins-tog" id="pins-tog">
+          <span class="pin-count" id="pins-cnt">0</span>
           <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
         </div>
       </div>
-      <div class="pins-list" id="pins-list"></div>
+      <div class="pins-list show" id="pins-list"></div>
     </div>
 
-    <!-- INTERSECTION BANNER -->
-    <div class="intersection-banner" id="intersection-banner" style="display:none">
+    <div class="ix-banner" id="ix-banner" style="display:none">
       <svg viewBox="0 0 24 24"><circle cx="9" cy="12" r="6"/><circle cx="15" cy="12" r="6"/></svg>
-      <span>Mostrando a área comum entre todos os pins salvos</span>
+      <span id="ix-text">Área comum a todos os pins</span>
     </div>
 
-    <!-- RESULTS -->
-    <div class="results-header">
-      <h3 id="results-title">Resultados</h3>
-      <span class="count-badge" id="count-badge">0</span>
+    <div class="res-hdr">
+      <h3 id="res-title">Resultados</h3>
+      <span class="badge" id="badge">0</span>
     </div>
-    <div class="results-list" id="results-list">
-      <div class="empty-state">
+    <div class="res-list" id="res-list">
+      <div class="empty">
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg>
-        <p><strong>Nenhuma busca realizada</strong>Insira uma cidade e a faixa de distância para ver os países.</p>
+        <p><strong>Nenhuma busca ainda</strong>Insira uma cidade, defina a faixa e salve pins para ver a interseção.</p>
       </div>
     </div>
   </aside>
 
   <div class="map-wrap">
-    <div class="loading-spinner" id="loading">
-      <div class="spinner-ring"></div>
-      <p>Buscando localização…</p>
+    <div class="spinner-wrap" id="spinner">
+      <div class="spinner"></div>
+      <p id="spinner-msg">Buscando…</p>
     </div>
     <div id="map"></div>
-    <div class="map-overlay">
-      <button class="map-btn" title="Resetar mapa" onclick="resetMap()">
+    <div class="map-btns">
+      <button class="map-btn" title="Resetar" onclick="resetAll()">
         <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
       </button>
     </div>
   </div>
 </div>
-
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
 <script>
-const COUNTRIES = [
+// ─── COUNTRIES ───────────────────────────────────────────────────────────────
+const COUNTRIES=[
   {name:"Afeganistão",code:"AF",flag:"🇦🇫",capital:"Cabul",continent:"Ásia",lat:33.93911,lng:67.709953},
   {name:"África do Sul",code:"ZA",flag:"🇿🇦",capital:"Pretória",continent:"África",lat:-30.559482,lng:22.937506},
   {name:"Albânia",code:"AL",flag:"🇦🇱",capital:"Tirana",continent:"Europa",lat:41.153332,lng:20.168331},
   {name:"Alemanha",code:"DE",flag:"🇩🇪",capital:"Berlim",continent:"Europa",lat:51.165691,lng:10.451526},
   {name:"Andorra",code:"AD",flag:"🇦🇩",capital:"Andorra la Vella",continent:"Europa",lat:42.546245,lng:1.601554},
   {name:"Angola",code:"AO",flag:"🇦🇴",capital:"Luanda",continent:"África",lat:-11.202692,lng:17.873887},
-  {name:"Antígua e Barbuda",code:"AG",flag:"🇦🇬",capital:"Saint John's",continent:"América",lat:17.060816,lng:-61.796428},
   {name:"Arábia Saudita",code:"SA",flag:"🇸🇦",capital:"Riade",continent:"Ásia",lat:23.885942,lng:45.079162},
   {name:"Argélia",code:"DZ",flag:"🇩🇿",capital:"Argel",continent:"África",lat:28.033886,lng:1.659626},
   {name:"Argentina",code:"AR",flag:"🇦🇷",capital:"Buenos Aires",continent:"América",lat:-38.416097,lng:-63.616672},
@@ -314,7 +276,6 @@ const COUNTRIES = [
   {name:"Cuba",code:"CU",flag:"🇨🇺",capital:"Havana",continent:"América",lat:21.521757,lng:-77.781167},
   {name:"Dinamarca",code:"DK",flag:"🇩🇰",capital:"Copenhague",continent:"Europa",lat:56.26392,lng:9.501785},
   {name:"Djibouti",code:"DJ",flag:"🇩🇯",capital:"Djibuti",continent:"África",lat:11.825138,lng:42.590275},
-  {name:"Dominica",code:"DM",flag:"🇩🇲",capital:"Roseau",continent:"América",lat:15.414999,lng:-61.370976},
   {name:"Egito",code:"EG",flag:"🇪🇬",capital:"Cairo",continent:"África",lat:26.820553,lng:30.802498},
   {name:"El Salvador",code:"SV",flag:"🇸🇻",capital:"San Salvador",continent:"América",lat:13.794185,lng:-88.89653},
   {name:"Emirados Árabes Unidos",code:"AE",flag:"🇦🇪",capital:"Abu Dhabi",continent:"Ásia",lat:23.424076,lng:53.847818},
@@ -345,8 +306,6 @@ const COUNTRIES = [
   {name:"Honduras",code:"HN",flag:"🇭🇳",capital:"Tegucigalpa",continent:"América",lat:15.199999,lng:-86.241905},
   {name:"Hungria",code:"HU",flag:"🇭🇺",capital:"Budapeste",continent:"Europa",lat:47.162494,lng:19.503304},
   {name:"Iêmen",code:"YE",flag:"🇾🇪",capital:"Sanaa",continent:"Ásia",lat:15.552727,lng:48.516388},
-  {name:"Ilhas Marshall",code:"MH",flag:"🇲🇭",capital:"Majuro",continent:"Oceania",lat:7.131474,lng:171.184478},
-  {name:"Ilhas Salomão",code:"SB",flag:"🇸🇧",capital:"Honiara",continent:"Oceania",lat:-9.64571,lng:160.156194},
   {name:"Índia",code:"IN",flag:"🇮🇳",capital:"Nova Délhi",continent:"Ásia",lat:20.593684,lng:78.96288},
   {name:"Indonésia",code:"ID",flag:"🇮🇩",capital:"Jacarta",continent:"Ásia",lat:-0.789275,lng:113.921327},
   {name:"Irã",code:"IR",flag:"🇮🇷",capital:"Teerã",continent:"Ásia",lat:32.427908,lng:53.688046},
@@ -358,7 +317,6 @@ const COUNTRIES = [
   {name:"Jamaica",code:"JM",flag:"🇯🇲",capital:"Kingston",continent:"América",lat:18.109581,lng:-77.297508},
   {name:"Japão",code:"JP",flag:"🇯🇵",capital:"Tóquio",continent:"Ásia",lat:36.204824,lng:138.252924},
   {name:"Jordânia",code:"JO",flag:"🇯🇴",capital:"Amã",continent:"Ásia",lat:30.585164,lng:36.238414},
-  {name:"Kiribati",code:"KI",flag:"🇰🇮",capital:"Tarawa",continent:"Oceania",lat:-3.370417,lng:-168.734039},
   {name:"Kosovo",code:"XK",flag:"🇽🇰",capital:"Pristina",continent:"Europa",lat:42.602636,lng:20.902977},
   {name:"Kuwait",code:"KW",flag:"🇰🇼",capital:"Cidade do Kuwait",continent:"Ásia",lat:29.31166,lng:47.481766},
   {name:"Laos",code:"LA",flag:"🇱🇦",capital:"Vientiane",continent:"Ásia",lat:19.85627,lng:102.495496},
@@ -380,7 +338,6 @@ const COUNTRIES = [
   {name:"Maurício",code:"MU",flag:"🇲🇺",capital:"Port Louis",continent:"África",lat:-20.348404,lng:57.552152},
   {name:"Mauritânia",code:"MR",flag:"🇲🇷",capital:"Nouakchott",continent:"África",lat:21.00789,lng:-10.940835},
   {name:"México",code:"MX",flag:"🇲🇽",capital:"Cidade do México",continent:"América",lat:23.634501,lng:-102.552784},
-  {name:"Micronésia",code:"FM",flag:"🇫🇲",capital:"Palikir",continent:"Oceania",lat:7.425554,lng:150.550812},
   {name:"Moçambique",code:"MZ",flag:"🇲🇿",capital:"Maputo",continent:"África",lat:-18.665695,lng:35.529562},
   {name:"Moldávia",code:"MD",flag:"🇲🇩",capital:"Chisinau",continent:"Europa",lat:47.411631,lng:28.369885},
   {name:"Mônaco",code:"MC",flag:"🇲🇨",capital:"Mônaco",continent:"Europa",lat:43.750298,lng:7.412841},
@@ -388,7 +345,6 @@ const COUNTRIES = [
   {name:"Montenegro",code:"ME",flag:"🇲🇪",capital:"Podgorica",continent:"Europa",lat:42.708678,lng:19.37439},
   {name:"Myanmar",code:"MM",flag:"🇲🇲",capital:"Naypyidaw",continent:"Ásia",lat:21.913965,lng:95.956223},
   {name:"Namíbia",code:"NA",flag:"🇳🇦",capital:"Windhoek",continent:"África",lat:-22.95764,lng:18.49041},
-  {name:"Nauru",code:"NR",flag:"🇳🇷",capital:"Yaren",continent:"Oceania",lat:-0.522778,lng:166.931503},
   {name:"Nepal",code:"NP",flag:"🇳🇵",capital:"Katmandu",continent:"Ásia",lat:28.394857,lng:84.124008},
   {name:"Nicarágua",code:"NI",flag:"🇳🇮",capital:"Manágua",continent:"América",lat:12.865416,lng:-85.207229},
   {name:"Níger",code:"NE",flag:"🇳🇪",capital:"Niamei",continent:"África",lat:17.607789,lng:8.081666},
@@ -398,7 +354,6 @@ const COUNTRIES = [
   {name:"Omã",code:"OM",flag:"🇴🇲",capital:"Mascate",continent:"Ásia",lat:21.512583,lng:55.923255},
   {name:"Países Baixos",code:"NL",flag:"🇳🇱",capital:"Amsterdã",continent:"Europa",lat:52.132633,lng:5.291266},
   {name:"Paquistão",code:"PK",flag:"🇵🇰",capital:"Islamabade",continent:"Ásia",lat:30.375321,lng:69.345116},
-  {name:"Palau",code:"PW",flag:"🇵🇼",capital:"Ngerulmud",continent:"Oceania",lat:7.51498,lng:134.58252},
   {name:"Panamá",code:"PA",flag:"🇵🇦",capital:"Cidade do Panamá",continent:"América",lat:8.537981,lng:-80.782127},
   {name:"Papua Nova Guiné",code:"PG",flag:"🇵🇬",capital:"Port Moresby",continent:"Oceania",lat:-6.314993,lng:143.95555},
   {name:"Paraguai",code:"PY",flag:"🇵🇾",capital:"Assunção",continent:"América",lat:-23.442503,lng:-58.443832},
@@ -414,12 +369,7 @@ const COUNTRIES = [
   {name:"Romênia",code:"RO",flag:"🇷🇴",capital:"Bucareste",continent:"Europa",lat:45.943161,lng:24.96676},
   {name:"Ruanda",code:"RW",flag:"🇷🇼",capital:"Kigali",continent:"África",lat:-1.940278,lng:29.873888},
   {name:"Rússia",code:"RU",flag:"🇷🇺",capital:"Moscou",continent:"Europa",lat:61.52401,lng:105.318756},
-  {name:"Samoa",code:"WS",flag:"🇼🇸",capital:"Apia",continent:"Oceania",lat:-13.759029,lng:-172.104629},
-  {name:"San Marino",code:"SM",flag:"🇸🇲",capital:"Cidade de San Marino",continent:"Europa",lat:43.94236,lng:12.457777},
-  {name:"Santa Lúcia",code:"LC",flag:"🇱🇨",capital:"Castries",continent:"América",lat:13.909444,lng:-60.978893},
-  {name:"São Cristóvão e Nevis",code:"KN",flag:"🇰🇳",capital:"Basseterre",continent:"América",lat:17.357822,lng:-62.782998},
   {name:"São Tomé e Príncipe",code:"ST",flag:"🇸🇹",capital:"São Tomé",continent:"África",lat:0.18636,lng:6.613081},
-  {name:"São Vicente e Granadinas",code:"VC",flag:"🇻🇨",capital:"Kingstown",continent:"América",lat:12.984305,lng:-61.287228},
   {name:"Senegal",code:"SN",flag:"🇸🇳",capital:"Dacar",continent:"África",lat:14.497401,lng:-14.452362},
   {name:"Serra Leoa",code:"SL",flag:"🇸🇱",capital:"Freetown",continent:"África",lat:8.460555,lng:-11.779889},
   {name:"Sérvia",code:"RS",flag:"🇷🇸",capital:"Belgrado",continent:"Europa",lat:44.016521,lng:21.005859},
@@ -439,685 +389,496 @@ const COUNTRIES = [
   {name:"Tanzânia",code:"TZ",flag:"🇹🇿",capital:"Dodoma",continent:"África",lat:-6.369028,lng:34.888822},
   {name:"Timor-Leste",code:"TL",flag:"🇹🇱",capital:"Díli",continent:"Ásia",lat:-8.874217,lng:125.727539},
   {name:"Togo",code:"TG",flag:"🇹🇬",capital:"Lomé",continent:"África",lat:8.619543,lng:0.824782},
-  {name:"Tonga",code:"TO",flag:"🇹🇴",capital:"Nuku'alofa",continent:"Oceania",lat:-21.178986,lng:-175.198242},
   {name:"Trinidad e Tobago",code:"TT",flag:"🇹🇹",capital:"Porto Espanha",continent:"América",lat:10.691803,lng:-61.222503},
   {name:"Tunísia",code:"TN",flag:"🇹🇳",capital:"Túnis",continent:"África",lat:33.886917,lng:9.537499},
   {name:"Turcomenistão",code:"TM",flag:"🇹🇲",capital:"Asgabate",continent:"Ásia",lat:38.969719,lng:59.556278},
   {name:"Turquia",code:"TR",flag:"🇹🇷",capital:"Ancara",continent:"Ásia",lat:38.963745,lng:35.243322},
-  {name:"Tuvalu",code:"TV",flag:"🇹🇻",capital:"Funafuti",continent:"Oceania",lat:-7.109535,lng:177.64933},
   {name:"Ucrânia",code:"UA",flag:"🇺🇦",capital:"Kiev",continent:"Europa",lat:48.379433,lng:31.16558},
   {name:"Uganda",code:"UG",flag:"🇺🇬",capital:"Kampala",continent:"África",lat:1.373333,lng:32.290275},
   {name:"Uruguai",code:"UY",flag:"🇺🇾",capital:"Montevidéu",continent:"América",lat:-32.522779,lng:-55.765835},
   {name:"Uzbequistão",code:"UZ",flag:"🇺🇿",capital:"Tashkent",continent:"Ásia",lat:41.377491,lng:64.585262},
-  {name:"Vanuatu",code:"VU",flag:"🇻🇺",capital:"Port Vila",continent:"Oceania",lat:-15.376706,lng:166.959158},
   {name:"Venezuela",code:"VE",flag:"🇻🇪",capital:"Caracas",continent:"América",lat:6.42375,lng:-66.58973},
   {name:"Vietnã",code:"VN",flag:"🇻🇳",capital:"Hanói",continent:"Ásia",lat:14.058324,lng:108.277199},
   {name:"Zimbábue",code:"ZW",flag:"🇿🇼",capital:"Harare",continent:"África",lat:-19.015438,lng:29.154857},
   {name:"Zâmbia",code:"ZM",flag:"🇿🇲",capital:"Lusaka",continent:"África",lat:-13.133897,lng:27.849332},
 ];
 
-// ── PIN COLORS ──────────────────────────────────────────────────
-const PIN_COLORS = [
-  { color: '#1D6B5C', light: '#E2F0ED', name: 'verde'    },
-  { color: '#C9570A', light: '#FDEEE4', name: 'laranja'  },
-  { color: '#2563A8', light: '#E3EEFA', name: 'azul'     },
-  { color: '#8B3FAF', light: '#F3E8FB', name: 'roxo'     },
-  { color: '#B5293A', light: '#FCEAEC', name: 'vermelho' },
-  { color: '#1C7A6B', light: '#E0F2EF', name: 'esmeralda'},
+// ─── PIN COLORS ──────────────────────────────────────────────────────────────
+const COLORS=[
+  {hex:'#1D6B5C',light:'#E2F0ED'},
+  {hex:'#C9570A',light:'#FDEEE4'},
+  {hex:'#2563A8',light:'#E3EEFA'},
+  {hex:'#8B3FAF',light:'#F3E8FB'},
+  {hex:'#B5293A',light:'#FCEAEC'},
+  {hex:'#1C7A6B',light:'#E0F2EF'},
 ];
 
-// ── STATE ────────────────────────────────────────────────────────
-let map, originMarker, radiusCircle, innerCircle, countryMarkers = [];
-let originCoords = null;
-let selectedIndex = -1;
-let searchTimeout = null;
-let geocodeCache = {};
-let lastQuery = '';
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let map, previewLayers=[], intersectionLayer=null;
+let originCoords=null, selectedIdx=-1, searchTO=null, geoCache={}, lastQ='';
+// pin: {id, label, coords, minKm, maxKm, minDisp, maxDisp, unit, color, layers:{marker,outerCircle,innerCircle,countryMarkers[]}}
+let pins=[];
 
-// Pins: [{id, label, coords, minKm, maxKm, unit, color, mapLayers: {marker, circle, innerCircle, countryMarkers[]}, found:[]}]
-let pins = [];
-let activePinId = null; // which pin's countries are shown in sidebar
-let intersectionLayer = null; // highlighted overlap area on the map
-let intersectionMode = false; // true when 2+ pins exist and we're showing the overlap list
-
-// ── MAP INIT ─────────────────────────────────────────────────────
-map = L.map('map', { zoomControl: false }).setView([20, 0], 2);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+// ─── MAP ─────────────────────────────────────────────────────────────────────
+map=L.map('map',{zoomControl:false}).setView([20,0],2);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:19
 }).addTo(map);
-L.control.zoom({ position: 'bottomright' }).addTo(map);
+L.control.zoom({position:'bottomright'}).addTo(map);
 
-// ── DOM REFS ──────────────────────────────────────────────────────
-const cityInput    = document.getElementById('city-input');
-const radiusMin    = document.getElementById('radius-min');
-const radiusMax    = document.getElementById('radius-max');
-const rangeHint    = document.getElementById('range-hint');
-const unitSelect   = document.getElementById('unit-select');
-const autocompleteList = document.getElementById('autocomplete');
-const resultsList  = document.getElementById('results-list');
-const countBadge   = document.getElementById('count-badge');
-const resultsTitle = document.getElementById('results-title');
-const loading      = document.getElementById('loading');
-const btnSearch    = document.getElementById('btn-search');
-const btnPin       = document.getElementById('btn-pin');
-const toast        = document.getElementById('toast');
-const pinsSection  = document.getElementById('pins-section');
-const pinsList     = document.getElementById('pins-list');
-const pinsCount    = document.getElementById('pins-count');
-const pinsToggle   = document.getElementById('pins-toggle');
-const intersectionBanner = document.getElementById('intersection-banner');
+// ─── DOM ─────────────────────────────────────────────────────────────────────
+const $=id=>document.getElementById(id);
+const cityInput=$('city-input'), rMin=$('r-min'), rMax=$('r-max'), unitSel=$('unit-sel');
+const acList=$('autocomplete'), rangeHint=$('range-hint');
+const btnSearch=$('btn-search'), btnPin=$('btn-pin');
+const resList=$('res-list'), badge=$('badge'), resTitle=$('res-title');
+const spinner=$('spinner'), spinnerMsg=$('spinner-msg');
+const toastEl=$('toast');
+const pinsSec=$('pins-sec'), pinsList=$('pins-list'), pinsCnt=$('pins-cnt');
+const pinsTog=$('pins-tog');
+const ixBanner=$('ix-banner'), ixText=$('ix-text');
 
-// ── RADIUS MIN/MAX ────────────────────────────────────────────────
-function getRadiusBounds() {
-  let minV = parseFloat(radiusMin.value);
-  let maxV = parseFloat(radiusMax.value);
-  if (isNaN(minV) || minV < 0) minV = 0;
-  if (isNaN(maxV) || maxV <= 0) maxV = 1;
-  if (maxV <= minV) maxV = minV + 1;
-  return { minV, maxV };
+// ─── RANGE HINT ──────────────────────────────────────────────────────────────
+function getBounds(){
+  let mn=parseFloat(rMin.value)||0, mx=parseFloat(rMax.value)||2000;
+  if(mn<0)mn=0; if(mx<1)mx=1; if(mx<=mn)mx=mn+1;
+  return{mn,mx};
+}
+function syncHint(){
+  const{mn,mx}=getBounds(), u=unitSel.value;
+  rangeHint.textContent=mn>0
+    ?`Países entre ${mn.toLocaleString('pt-BR')} e ${mx.toLocaleString('pt-BR')} ${u}`
+    :`Países até ${mx.toLocaleString('pt-BR')} ${u} da cidade`;
+}
+[rMin,rMax,unitSel].forEach(el=>el.addEventListener('input',syncHint));
+syncHint();
+
+// ─── AUTOCOMPLETE ─────────────────────────────────────────────────────────────
+cityInput.addEventListener('input',()=>{
+  originCoords=null; clearTimeout(searchTO);
+  const q=cityInput.value.trim();
+  if(q.length<3){closeAC();return;}
+  searchTO=setTimeout(()=>fetchAC(q),320);
+});
+cityInput.addEventListener('keydown',e=>{
+  const items=acList.querySelectorAll('.ac-item');
+  if(e.key==='ArrowDown'){selectedIdx=Math.min(selectedIdx+1,items.length-1);markActive(items);e.preventDefault();}
+  else if(e.key==='ArrowUp'){selectedIdx=Math.max(selectedIdx-1,0);markActive(items);e.preventDefault();}
+  else if(e.key==='Enter'){if(selectedIdx>=0&&items[selectedIdx])items[selectedIdx].click();else doSearch();}
+  else if(e.key==='Escape')closeAC();
+});
+cityInput.addEventListener('blur',()=>setTimeout(closeAC,150));
+
+function markActive(items){items.forEach((el,i)=>el.classList.toggle('active',i===selectedIdx));}
+
+async function fetchAC(q){
+  lastQ=q; showACLoading();
+  try{
+    const r=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=pt`);
+    if(!r.ok)throw 0;
+    const d=await r.json();
+    if(q!==lastQ)return;
+    const feats=(d.features||[]).filter(f=>['city','town','village','municipality','borough','suburb'].includes(f.properties.type||''));
+    if(!feats.length){await fetchACNom(q);return;}
+    renderAC(feats.map(f=>{
+      const p=f.properties;
+      return{name:p.name||p.city||'',sub:[p.state,p.country].filter(Boolean).join(', '),lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0]};
+    }));
+  }catch{if(q===lastQ)await fetchACNom(q);}
 }
 
-function syncRangeHint() {
-  const { minV, maxV } = getRadiusBounds();
-  const unit = unitSelect.value === 'mi' ? 'mi' : 'km';
-  const fmt = v => v.toLocaleString('pt-BR');
-  rangeHint.textContent = minV > 0
-    ? `Mostra países entre ${fmt(minV)} e ${fmt(maxV)} ${unit} da cidade`
-    : `Mostra países até ${fmt(maxV)} ${unit} da cidade`;
+async function fetchACNom(q){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1`,{headers:{'Accept-Language':'pt-BR'}});
+    const d=await r.json();
+    if(q!==lastQ)return;
+    if(!d.length){closeAC();return;}
+    renderAC(d.map(r=>({
+      name:r.address.city||r.address.town||r.address.village||r.name||'',
+      sub:[r.address.state,r.address.country].filter(Boolean).join(', '),
+      lat:parseFloat(r.lat),lng:parseFloat(r.lon)
+    })));
+  }catch{closeAC();}
 }
 
-radiusMin.addEventListener('input', syncRangeHint);
-radiusMax.addEventListener('input', syncRangeHint);
-radiusMin.addEventListener('blur', () => {
-  const { minV, maxV } = getRadiusBounds();
-  radiusMin.value = minV;
-  radiusMax.value = maxV;
-  syncRangeHint();
-});
-radiusMax.addEventListener('blur', () => {
-  const { minV, maxV } = getRadiusBounds();
-  radiusMin.value = minV;
-  radiusMax.value = maxV;
-  syncRangeHint();
-});
-unitSelect.addEventListener('change', syncRangeHint);
-syncRangeHint();
-
-// ── AUTOCOMPLETE ──────────────────────────────────────────────────
-cityInput.addEventListener('input', () => {
-  originCoords = null;
-  clearTimeout(searchTimeout);
-  const q = cityInput.value.trim();
-  if (q.length < 3) { closeAutocomplete(); return; }
-  searchTimeout = setTimeout(() => fetchSuggestions(q), 300);
-});
-
-cityInput.addEventListener('keydown', (e) => {
-  const items = autocompleteList.querySelectorAll('.autocomplete-item');
-  if (e.key === 'ArrowDown') { selectedIndex = Math.min(selectedIndex + 1, items.length - 1); updateActive(items); e.preventDefault(); }
-  else if (e.key === 'ArrowUp') { selectedIndex = Math.max(selectedIndex - 1, 0); updateActive(items); e.preventDefault(); }
-  else if (e.key === 'Enter') { if (selectedIndex >= 0 && items[selectedIndex]) items[selectedIndex].click(); else doSearch(); }
-  else if (e.key === 'Escape') closeAutocomplete();
-});
-
-cityInput.addEventListener('blur', () => { setTimeout(closeAutocomplete, 150); });
-cityInput.addEventListener('focus', () => {
-  const q = cityInput.value.trim();
-  if (q.length >= 3 && autocompleteList.children.length) autocompleteList.classList.add('show');
-});
-
-function updateActive(items) {
-  items.forEach((el, i) => el.classList.toggle('active', i === selectedIndex));
+function showACLoading(){
+  acList.innerHTML=`<div style="padding:.6rem .9rem;font-size:.8rem;color:var(--ink-f);display:flex;align-items:center;gap:8px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin .8s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Buscando…</div>`;
+  acList.classList.add('show');
 }
 
-async function fetchSuggestions(q) {
-  lastQuery = q;
-  showAutocompleteSkeleton();
-  try {
-    const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=pt`);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    if (q !== lastQuery) return;
-    const features = (data.features || []).filter(f => {
-      const t = f.properties.type || '';
-      return ['city','town','village','municipality','borough','suburb','county','district'].includes(t);
+function renderAC(items){
+  selectedIdx=-1; acList.innerHTML='';
+  const seen=new Set();
+  items.forEach(({name,sub,lat,lng})=>{
+    if(!name)return; const k=name+'|'+sub; if(seen.has(k))return; seen.add(k);
+    const d=document.createElement('div'); d.className='ac-item';
+    d.innerHTML=`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-f)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg><div style="min-width:0"><div style="font-weight:500;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div><div style="font-size:.72rem;color:var(--ink-m);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sub}</div></div>`;
+    d.addEventListener('mousedown',e=>e.preventDefault());
+    d.addEventListener('click',()=>{
+      cityInput.value=name+(sub?`, ${sub.split(',')[0]}`:'');
+      originCoords={lat,lng}; geoCache[cityInput.value]={lat,lng};
+      closeAC(); doSearch();
     });
-    if (!features.length) { await fetchSuggestionsNominatim(q); return; }
-    showAutocompletePhoton(features);
-  } catch {
-    if (q !== lastQuery) return;
-    await fetchSuggestionsNominatim(q);
+    acList.appendChild(d);
+  });
+  if(!acList.children.length){closeAC();return;}
+  acList.classList.add('show');
+}
+
+function closeAC(){acList.classList.remove('show');acList.innerHTML='';selectedIdx=-1;}
+
+// ─── GEOCODE ─────────────────────────────────────────────────────────────────
+async function geocode(name){
+  if(geoCache[name])return geoCache[name];
+  const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`,{headers:{'Accept-Language':'pt-BR'}});
+  const d=await r.json();
+  if(!d.length)return null;
+  const c={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};
+  geoCache[name]=c; return c;
+}
+
+// ─── MATH ────────────────────────────────────────────────────────────────────
+function haversine(la1,lo1,la2,lo2){
+  const R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
+  const a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+// Build geodesic circle as LatLng array (steps points)
+function geodesicCircle(lat,lng,radiusKm,steps=180){
+  const pts=[], R=6371;
+  const d=radiusKm/R; // angular distance in radians
+  const la=lat*Math.PI/180, lo=lng*Math.PI/180;
+  for(let i=0;i<=steps;i++){
+    const az=2*Math.PI*i/steps;
+    const la2=Math.asin(Math.sin(la)*Math.cos(d)+Math.cos(la)*Math.sin(d)*Math.cos(az));
+    const lo2=lo+Math.atan2(Math.sin(az)*Math.sin(d)*Math.cos(la),Math.cos(d)-Math.sin(la)*Math.sin(la2));
+    pts.push([la2*180/Math.PI, lo2*180/Math.PI]);
   }
+  return pts;
 }
 
-async function fetchSuggestionsNominatim(q) {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=6&addressdetails=1&accept-language=pt-BR`, { headers: { 'Accept-Language': 'pt-BR' } });
-    const data = await res.json();
-    if (q !== lastQuery) return;
-    if (!data.length) { closeAutocomplete(); return; }
-    showAutocompleteNominatim(data);
-  } catch { closeAutocomplete(); }
-}
+// Check if a point is inside a geodesic circle
+function inCircle(lat,lng,cLat,cLng,rKm){return haversine(lat,lng,cLat,cLng)<=rKm;}
 
-function showAutocompleteSkeleton() {
-  autocompleteList.innerHTML = `<div style="padding:0.65rem 0.9rem;font-size:0.8rem;color:var(--ink-faint);display:flex;align-items:center;gap:8px">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 0.8s linear infinite;flex-shrink:0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-    Buscando cidades…</div>`;
-  autocompleteList.classList.add('show');
-}
+// Compute intersection polygon of multiple rings using point sampling on each circle boundary
+// For each arc segment of each circle, check if the midpoint is inside ALL other rings
+// Then sort all valid boundary points into a polygon
+function computeIntersectionPolygon(pins){
+  if(pins.length<2)return null;
 
-function buildItem(name, subtitle, lat, lng) {
-  const div = document.createElement('div');
-  div.className = 'autocomplete-item';
-  div.innerHTML = `
-    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-faint)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px">
-      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-    </svg>
-    <div style="min-width:0">
-      <div style="font-weight:500;color:var(--ink);font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
-      <div style="font-size:0.72rem;color:var(--ink-muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${subtitle}</div>
-    </div>`;
-  div.addEventListener('mousedown', e => e.preventDefault());
-  div.addEventListener('click', () => {
-    cityInput.value = name + (subtitle ? `, ${subtitle.split(',')[0]}` : '');
-    originCoords = { lat, lng };
-    geocodeCache[cityInput.value] = originCoords;
-    closeAutocomplete();
-    doSearch();
-  });
-  return div;
-}
+  const STEPS=360;
+  let allPts=[];
 
-function showAutocompletePhoton(features) {
-  selectedIndex = -1;
-  autocompleteList.innerHTML = '';
-  const seen = new Set();
-  features.forEach(f => {
-    const p = f.properties;
-    const name = p.name || p.city || ''; if (!name) return;
-    const subtitle = [p.state, p.country].filter(Boolean).join(', ');
-    const key = `${name}|${subtitle}`; if (seen.has(key)) return; seen.add(key);
-    const [lng, lat] = f.geometry.coordinates;
-    autocompleteList.appendChild(buildItem(name, subtitle, lat, lng));
-  });
-  if (!autocompleteList.children.length) { closeAutocomplete(); return; }
-  autocompleteList.classList.add('show');
-}
-
-function showAutocompleteNominatim(results) {
-  selectedIndex = -1;
-  autocompleteList.innerHTML = '';
-  const seen = new Set();
-  results.forEach(r => {
-    const city = r.address.city || r.address.town || r.address.village || r.address.municipality || r.name;
-    if (!city) return;
-    const subtitle = [r.address.state, r.address.country].filter(Boolean).join(', ');
-    const key = `${city}|${subtitle}`; if (seen.has(key)) return; seen.add(key);
-    autocompleteList.appendChild(buildItem(city, subtitle, parseFloat(r.lat), parseFloat(r.lon)));
-  });
-  if (!autocompleteList.children.length) { closeAutocomplete(); return; }
-  autocompleteList.classList.add('show');
-}
-
-function closeAutocomplete() {
-  autocompleteList.classList.remove('show');
-  autocompleteList.innerHTML = '';
-  selectedIndex = -1;
-}
-
-// ── GEOCODE ───────────────────────────────────────────────────────
-async function geocodeCity(name) {
-  if (geocodeCache[name]) return geocodeCache[name];
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(name)}&format=json&limit=1`, { headers: { 'Accept-Language': 'pt-BR' } });
-  const data = await res.json();
-  if (!data.length) return null;
-  const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-  geocodeCache[name] = coords;
-  return coords;
-}
-
-// ── HELPERS ───────────────────────────────────────────────────────
-function haversine(lat1, lon1, lat2, lon2) {
-  const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-function showToast(msg) {
-  toast.textContent = msg; toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 3000);
-}
-
-function setLoading(show, msg='Buscando localização…') {
-  loading.querySelector('p').textContent = msg;
-  loading.classList.toggle('show', show);
-}
-
-// ── MAIN SEARCH ───────────────────────────────────────────────────
-async function doSearch() {
-  const cityName = cityInput.value.trim();
-  if (!cityName) { showToast('Informe uma cidade de origem'); return; }
-
-  const { minV, maxV } = getRadiusBounds();
-  const toKm = v => unitSelect.value === 'mi' ? v * 1.60934 : v;
-  const minKm = toKm(minV);
-  const maxKm = toKm(maxV);
-
-  btnSearch.disabled = true;
-  setLoading(true, originCoords ? 'Calculando países…' : 'Buscando localização…');
-
-  try {
-    if (!originCoords) {
-      originCoords = await geocodeCity(cityName);
-      if (!originCoords) { showToast('Cidade não encontrada. Tente outro nome.'); return; }
+  // Collect boundary points from each pin's outer and inner circles
+  // that are inside ALL other pins' rings
+  pins.forEach((p,pi)=>{
+    // Outer boundary points
+    const outer=geodesicCircle(p.coords.lat,p.coords.lng,p.maxKm,STEPS);
+    outer.forEach(pt=>{
+      const inAll=pins.every((q,qi)=>{
+        if(qi===pi)return true;
+        const d=haversine(pt[0],pt[1],q.coords.lat,q.coords.lng);
+        return d>=q.minKm && d<=q.maxKm;
+      });
+      if(inAll)allPts.push(pt);
+    });
+    // Inner boundary points (if minKm>0)
+    if(p.minKm>0){
+      const inner=geodesicCircle(p.coords.lat,p.coords.lng,p.minKm,STEPS);
+      inner.forEach(pt=>{
+        const inAll=pins.every((q,qi)=>{
+          if(qi===pi)return true;
+          const d=haversine(pt[0],pt[1],q.coords.lat,q.coords.lng);
+          return d>=q.minKm && d<=q.maxKm;
+        });
+        if(inAll)allPts.push(pt);
+      });
     }
+  });
 
-    clearCurrentLayers();
+  if(allPts.length<3)return null;
 
-    const col = PIN_COLORS[0]; // preview uses teal
+  // Sort points by angle from centroid to form a proper polygon
+  const cLat=allPts.reduce((s,p)=>s+p[0],0)/allPts.length;
+  const cLng=allPts.reduce((s,p)=>s+p[1],0)/allPts.length;
+  allPts.sort((a,b)=>Math.atan2(a[1]-cLng,a[0]-cLat)-Math.atan2(b[1]-cLng,b[0]-cLat));
 
-    originMarker = L.marker([originCoords.lat, originCoords.lng], {
-      icon: L.divIcon({
-        className: '',
-        html: `<div style="width:13px;height:13px;background:${col.color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
-        iconSize:[13,13], iconAnchor:[6,6]
-      })
-    }).addTo(map).bindPopup(`<div class="popup-content"><p class="popup-name">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Prévia — salve como pin para fixar</p></div>`);
+  return allPts;
+}
 
-    radiusCircle = L.circle([originCoords.lat, originCoords.lng], {
-      radius: maxKm*1000, color: col.color, fillColor: col.color,
-      fillOpacity: 0.06, weight: 2, dashArray: '6 4'
+// ─── PREVIEW ─────────────────────────────────────────────────────────────────
+function clearPreview(){
+  previewLayers.forEach(l=>map.removeLayer(l));
+  previewLayers=[];
+}
+
+async function doSearch(){
+  const city=cityInput.value.trim();
+  if(!city){toast('Informe uma cidade');return;}
+  const{mn,mx}=getBounds();
+  const u=unitSel.value;
+  const toKm=v=>u==='mi'?v*1.60934:v;
+  const mnKm=toKm(mn), mxKm=toKm(mx);
+
+  btnSearch.disabled=true; setSpinner(true,'Localizando cidade…');
+  try{
+    if(!originCoords){
+      originCoords=await geocode(city);
+      if(!originCoords){toast('Cidade não encontrada.');return;}
+    }
+    clearPreview();
+
+    const col=COLORS[0];
+    const mk=L.marker([originCoords.lat,originCoords.lng],{
+      icon:L.divIcon({className:'',html:`<div style="width:12px;height:12px;background:${col.hex};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,iconSize:[12,12],iconAnchor:[6,6]})
     }).addTo(map);
+    mk.bindPopup(`<div class="pc"><p class="pn">📍 ${city}</p><p class="pd" style="color:var(--ink-m)">Prévia — clique em Pin para salvar</p></div>`);
+    previewLayers.push(mk);
 
-    if (minKm > 0) {
-      innerCircle = L.circle([originCoords.lat, originCoords.lng], {
-        radius: minKm*1000, color: col.color, fillColor: '#ffffff',
-        fillOpacity: 0.55, weight: 1.5, dashArray: '3 4'
-      }).addTo(map);
+    const outerC=L.circle([originCoords.lat,originCoords.lng],{radius:mxKm*1000,color:col.hex,fillColor:col.hex,fillOpacity:.05,weight:2,dashArray:'6 4'}).addTo(map);
+    previewLayers.push(outerC);
+    if(mnKm>0){
+      const innerC=L.circle([originCoords.lat,originCoords.lng],{radius:mnKm*1000,color:col.hex,fillColor:'#fff',fillOpacity:.5,weight:1.5,dashArray:'3 4'}).addTo(map);
+      previewLayers.push(innerC);
     }
 
-    const found = COUNTRIES
-      .map(c => ({ ...c, dist: Math.round(haversine(originCoords.lat, originCoords.lng, c.lat, c.lng)) }))
-      .filter(c => c.dist >= minKm && c.dist <= maxKm)
-      .sort((a,b) => a.dist - b.dist);
+    // Show country list for preview only if no pins yet
+    if(pins.length===0){
+      const found=COUNTRIES
+        .map(c=>({...c,dist:haversine(originCoords.lat,originCoords.lng,c.lat,c.lng)}))
+        .filter(c=>c.dist>=mnKm&&c.dist<=mxKm)
+        .sort((a,b)=>a.dist-b.dist);
+      renderSingleList(found,city,u,col.hex);
+    }else{
+      toast('Prévia — salve como pin para incluir na interseção');
+    }
+    map.fitBounds(outerC.getBounds(),{padding:[40,40]});
+  }catch(e){toast('Erro ao buscar.');console.error(e);}
+  finally{btnSearch.disabled=false;setSpinner(false);}
+}
 
-    found.forEach(c => {
-      const distLabel = unitSelect.value === 'mi' ? `${Math.round(c.dist/1.60934)} mi` : `${c.dist} km`;
-      const m = L.marker([c.lat,c.lng], {
-        icon: L.divIcon({
-          className: '',
-          html: `<div style="background:#fff;border:2px solid ${col.color};border-radius:20px;padding:1px 7px;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.13);color:#1C1A17;font-weight:500">${c.flag} ${c.name}</div>`,
-          iconAnchor:[0,8]
-        })
-      }).addTo(map);
-      m.bindPopup(`<div class="popup-content"><span class="popup-flag">${c.flag}</span><p class="popup-name">${c.name}</p><p class="popup-capital">Capital: ${c.capital}</p><p class="popup-dist" style="color:${col.color}">${distLabel} de ${cityName}</p></div>`);
+// ─── SAVE PIN ────────────────────────────────────────────────────────────────
+async function savePin(){
+  const city=cityInput.value.trim();
+  if(!city){toast('Informe uma cidade');return;}
+  const{mn,mx}=getBounds();
+  const u=unitSel.value;
+  const toKm=v=>u==='mi'?v*1.60934:v;
+  const mnKm=toKm(mn), mxKm=toKm(mx);
+  const col=COLORS[pins.length%COLORS.length];
+
+  btnPin.disabled=true; setSpinner(true,'Salvando pin…');
+  try{
+    if(!originCoords){
+      originCoords=await geocode(city);
+      if(!originCoords){toast('Cidade não encontrada.');return;}
+    }
+    const coords={...originCoords};
+
+    // Build pin map layers
+    const mk=L.marker([coords.lat,coords.lng],{
+      icon:L.divIcon({className:'',html:`<div style="width:14px;height:14px;background:${col.hex};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,iconSize:[14,14],iconAnchor:[7,7]})
+    }).addTo(map);
+    const rangeLabel=mn>0?`${mn.toLocaleString('pt-BR')}–${mx.toLocaleString('pt-BR')} ${u}`:`até ${mx.toLocaleString('pt-BR')} ${u}`;
+    mk.bindPopup(`<div class="pc"><p class="pn" style="color:${col.hex}">📍 ${city}</p><p class="pk">${rangeLabel}</p></div>`);
+
+    const outerC=L.circle([coords.lat,coords.lng],{radius:mxKm*1000,color:col.hex,fillColor:col.hex,fillOpacity:.07,weight:2,dashArray:'5 4'}).addTo(map);
+    let innerC=null;
+    if(mnKm>0){
+      innerC=L.circle([coords.lat,coords.lng],{radius:mnKm*1000,color:col.hex,fillColor:'#fff',fillOpacity:.5,weight:1.5,dashArray:'3 4'}).addTo(map);
+    }
+
+    const countryMarkers=[];
+    COUNTRIES.forEach(c=>{
+      const d=haversine(coords.lat,coords.lng,c.lat,c.lng);
+      if(d<mnKm||d>mxKm)return;
+      const dl=u==='mi'?`${Math.round(d/1.60934)} mi`:`${Math.round(d)} km`;
+      const m=L.marker([c.lat,c.lng],{icon:L.divIcon({className:'',html:`<div style="background:#fff;border:2px solid ${col.hex};border-radius:20px;padding:1px 7px;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,.13);font-weight:500">${c.flag} ${c.name}</div>`,iconAnchor:[0,8]})}).addTo(map);
+      m.bindPopup(`<div class="pc"><span class="pf">${c.flag}</span><p class="pn">${c.name}</p><p class="pk">Capital: ${c.capital}</p><p class="pd" style="color:${col.hex}">${dl} de ${city}</p></div>`);
       countryMarkers.push(m);
     });
 
-    map.fitBounds(radiusCircle.getBounds(), { padding:[40,40] });
-    if (pins.length >= 2) {
-      // keep showing intersection list/highlight; preview circle is just informative
-      showToast('Pré-visualização — salve como pin para incluir na interseção');
-    } else {
-      activePinId = null;
-      renderCountryList(found, cityName, null);
-      countBadge.textContent = found.length;
-      countBadge.style.display = found.length ? 'inline-block' : 'none';
-      resultsTitle.textContent = 'Resultados';
-      if (!found.length) showToast('Nenhum país encontrado nessa faixa.');
-    }
+    clearPreview();
 
-  } catch(err) {
-    showToast('Erro ao buscar. Verifique sua conexão.');
-    console.error(err);
-  } finally {
-    btnSearch.disabled = false;
-    setLoading(false);
-  }
-}
-
-function clearCurrentLayers() {
-  if (originMarker) { map.removeLayer(originMarker); originMarker = null; }
-  if (radiusCircle) { map.removeLayer(radiusCircle); radiusCircle = null; }
-  if (innerCircle) { map.removeLayer(innerCircle); innerCircle = null; }
-  countryMarkers.forEach(m => map.removeLayer(m));
-  countryMarkers = [];
-}
-
-// ── PINS ──────────────────────────────────────────────────────────
-function nextPinColor() {
-  return PIN_COLORS[pins.length % PIN_COLORS.length];
-}
-
-async function savePin() {
-  const cityName = cityInput.value.trim();
-  if (!cityName) { showToast('Informe uma cidade primeiro'); return; }
-
-  const { minV, maxV } = getRadiusBounds();
-  const unit = unitSelect.value;
-  const toKm = v => unit === 'mi' ? v * 1.60934 : v;
-  const minKm = toKm(minV);
-  const maxKm = toKm(maxV);
-
-  btnPin.disabled = true;
-  setLoading(true, originCoords ? 'Salvando pin…' : 'Buscando localização…');
-
-  try {
-    if (!originCoords) {
-      originCoords = await geocodeCity(cityName);
-      if (!originCoords) { showToast('Cidade não encontrada.'); return; }
-    }
-
-    const col = nextPinColor();
-    const id = Date.now();
-    const coords = { ...originCoords };
-
-    const rangeLabel = minV > 0
-      ? `${minV.toLocaleString('pt-BR')}–${maxV.toLocaleString('pt-BR')} ${unit}`
-      : `até ${maxV.toLocaleString('pt-BR')} ${unit}`;
-
-    // Build map layers for this pin
-    const pinOriginMarker = L.marker([coords.lat, coords.lng], {
-      icon: L.divIcon({
-        className: '',
-        html: `<div style="width:14px;height:14px;background:${col.color};border:3px solid #fff;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
-        iconSize:[14,14], iconAnchor:[7,7]
-      })
-    }).addTo(map);
-    pinOriginMarker.bindPopup(`<div class="popup-content"><p class="popup-name" style="color:${col.color}">📍 ${cityName}</p><p class="popup-dist" style="color:var(--ink-muted)">Pin salvo · ${rangeLabel}</p></div>`);
-
-    const pinCircle = L.circle([coords.lat, coords.lng], {
-      radius: maxKm*1000, color: col.color, fillColor: col.color,
-      fillOpacity: 0.07, weight: 2, dashArray: '5 4'
-    }).addTo(map);
-
-    let pinInnerCircle = null;
-    if (minKm > 0) {
-      pinInnerCircle = L.circle([coords.lat, coords.lng], {
-        radius: minKm*1000, color: col.color, fillColor: '#ffffff',
-        fillOpacity: 0.55, weight: 1.5, dashArray: '3 4'
-      }).addTo(map);
-    }
-
-    const found = COUNTRIES
-      .map(c => ({ ...c, dist: Math.round(haversine(coords.lat, coords.lng, c.lat, c.lng)) }))
-      .filter(c => c.dist >= minKm && c.dist <= maxKm)
-      .sort((a,b) => a.dist - b.dist);
-
-    const pinCountryMarkers = [];
-    found.forEach(c => {
-      const distLabel = unit === 'mi' ? `${Math.round(c.dist/1.60934)} mi` : `${c.dist} km`;
-      const m = L.marker([c.lat,c.lng], {
-        icon: L.divIcon({
-          className: '',
-          html: `<div style="background:#fff;border:2px solid ${col.color};border-radius:20px;padding:1px 7px;font-size:11px;white-space:nowrap;font-family:'DM Sans',sans-serif;box-shadow:0 2px 6px rgba(0,0,0,0.13);color:#1C1A17;font-weight:500">${c.flag} ${c.name}</div>`,
-          iconAnchor:[0,8]
-        })
-      }).addTo(map);
-      m.bindPopup(`<div class="popup-content"><span class="popup-flag">${c.flag}</span><p class="popup-name">${c.name}</p><p class="popup-capital">Capital: ${c.capital}</p><p class="popup-dist" style="color:${col.color}">${distLabel} de ${cityName}</p></div>`);
-      pinCountryMarkers.push(m);
-    });
-
-    // Remove preview layers (they're now replaced by pin layers)
-    clearCurrentLayers();
-
-    const pin = { id, label: cityName, coords, minKm, maxKm, minDisplay: minV, maxDisplay: maxV, unit, color: col.color, lightColor: col.light,
-      mapLayers: { marker: pinOriginMarker, circle: pinCircle, innerCircle: pinInnerCircle, countryMarkers: pinCountryMarkers }, found };
+    const pin={id:Date.now(),label:city,coords,minKm:mnKm,maxKm:mxKm,minDisp:mn,maxDisp:mx,unit:u,color:col.hex,layers:{marker:mk,outerCircle:outerC,innerCircle:innerC,countryMarkers}};
     pins.push(pin);
 
-    // Show in sidebar
-    activePinId = id;
     renderPinsList();
     updateIntersection();
-    map.fitBounds(pinCircle.getBounds(), { padding:[40,40] });
-    showToast(`Pin "${cityName}" salvo!`);
-
-  } catch(err) {
-    showToast('Erro ao salvar pin.'); console.error(err);
-  } finally {
-    btnPin.disabled = false;
-    setLoading(false);
-  }
+    toast(`Pin "${city}" salvo!`);
+    map.fitBounds(outerC.getBounds(),{padding:[40,40]});
+  }catch(e){toast('Erro ao salvar.');console.error(e);}
+  finally{btnPin.disabled=false;setSpinner(false);}
 }
 
-function removePin(id, e) {
+// ─── REMOVE PIN ──────────────────────────────────────────────────────────────
+function removePin(id,e){
   e.stopPropagation();
-  const idx = pins.findIndex(p => p.id === id);
-  if (idx < 0) return;
-  const pin = pins[idx];
-  map.removeLayer(pin.mapLayers.marker);
-  map.removeLayer(pin.mapLayers.circle);
-  if (pin.mapLayers.innerCircle) map.removeLayer(pin.mapLayers.innerCircle);
-  pin.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
-  pins.splice(idx, 1);
-  if (activePinId === id) activePinId = null;
+  const i=pins.findIndex(p=>p.id===id); if(i<0)return;
+  const p=pins[i];
+  map.removeLayer(p.layers.marker);
+  map.removeLayer(p.layers.outerCircle);
+  if(p.layers.innerCircle)map.removeLayer(p.layers.innerCircle);
+  p.layers.countryMarkers.forEach(m=>map.removeLayer(m));
+  pins.splice(i,1);
   renderPinsList();
   updateIntersection();
 }
 
-function focusPin(id) {
-  const pin = pins.find(p => p.id === id);
-  if (!pin) return;
-  map.fitBounds(pin.mapLayers.circle.getBounds(), { padding:[40,40] });
+function focusPin(id){
+  const p=pins.find(p=>p.id===id); if(!p)return;
+  map.fitBounds(p.layers.outerCircle.getBounds(),{padding:[40,40]});
 }
 
-function renderPinsList() {
-  const hasPins = pins.length > 0;
-  pinsSection.style.display = hasPins ? 'block' : 'none';
-  pinsCount.textContent = pins.length;
-
-  pinsList.innerHTML = pins.map(p => {
-    const fmt = v => v.toLocaleString('pt-BR');
-    const rangeLabel = p.minDisplay > 0
-      ? `${fmt(p.minDisplay)}–${fmt(p.maxDisplay)} ${p.unit}`
-      : `até ${fmt(p.maxDisplay)} ${p.unit}`;
-    return `<div class="pin-item" onclick="focusPin(${p.id})">
+// ─── RENDER PINS LIST ────────────────────────────────────────────────────────
+function renderPinsList(){
+  pinsSec.style.display=pins.length?'block':'none';
+  pinsCnt.textContent=pins.length;
+  pinsList.innerHTML=pins.map(p=>{
+    const rl=p.minDisp>0
+      ?`${p.minDisp.toLocaleString('pt-BR')}–${p.maxDisp.toLocaleString('pt-BR')} ${p.unit}`
+      :`até ${p.maxDisp.toLocaleString('pt-BR')} ${p.unit}`;
+    return`<div class="pin-item" onclick="focusPin(${p.id})">
       <div class="pin-dot" style="background:${p.color}"></div>
-      <div class="pin-label">
-        <div class="pin-name">${p.label}</div>
-        <div class="pin-meta">${rangeLabel} · ${p.found.length} países</div>
-      </div>
-      <div class="pin-remove" onclick="removePin(${p.id},event)" title="Remover pin">
-        <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </div>
+      <div class="pin-label"><div class="pin-name">${p.label}</div><div class="pin-meta">${rl}</div></div>
+      <div class="pin-rm" onclick="removePin(${p.id},event)"><svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
     </div>`;
   }).join('');
 }
 
-// ── INTERSECTION (overlap of all pin rings) ─────────────────────────
-function pinRingPolygon(pin) {
-  // Build a ring polygon (annulus) as a turf feature. If minKm is 0, it's a filled circle.
-  const center = [pin.coords.lng, pin.coords.lat];
-  const outer = turf.circle(center, pin.maxKm, { steps: 96, units: 'kilometers' });
-  if (pin.minKm > 0) {
-    const inner = turf.circle(center, pin.minKm, { steps: 96, units: 'kilometers' });
-    try {
-      return turf.difference(outer, inner);
-    } catch {
-      return outer;
-    }
-  }
-  return outer;
+function togglePins(){
+  pinsList.classList.toggle('show');
+  pinsTog.classList.toggle('open');
 }
 
-function computeIntersectionPolygon() {
-  if (pins.length < 2) return null;
-  let acc = pinRingPolygon(pins[0]);
-  for (let i = 1; i < pins.length; i++) {
-    if (!acc) return null;
-    const ring = pinRingPolygon(pins[i]);
-    try {
-      acc = turf.intersect(acc, ring);
-    } catch {
-      return null;
-    }
-    if (!acc) return null;
-  }
-  return acc;
+// ─── INTERSECTION ────────────────────────────────────────────────────────────
+function clearIntersection(){
+  if(intersectionLayer){map.removeLayer(intersectionLayer);intersectionLayer=null;}
 }
 
-function clearIntersectionLayer() {
-  if (intersectionLayer) { map.removeLayer(intersectionLayer); intersectionLayer = null; }
-}
+function updateIntersection(){
+  clearIntersection();
 
-function updateIntersection() {
-  clearIntersectionLayer();
-
-  if (pins.length < 2) {
-    intersectionMode = false;
-    intersectionBanner.style.display = 'none';
-    if (pins.length === 1) {
-      // single pin: show its own list
-      const p = pins[0];
-      renderCountryList(p.found, p.label, p.color);
-      countBadge.textContent = p.found.length;
-      countBadge.style.display = p.found.length ? 'inline-block' : 'none';
-      resultsTitle.textContent = p.label;
-    } else {
-      resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e a faixa de distância para ver os países.</p></div>`;
-      countBadge.style.display = 'none';
-      resultsTitle.textContent = 'Resultados';
-    }
+  if(pins.length===0){
+    ixBanner.style.display='none';
+    showEmpty('Nenhuma busca ainda','Insira uma cidade, defina a faixa e salve pins.');
+    badge.style.display='none'; resTitle.textContent='Resultados';
     return;
   }
 
-  intersectionMode = true;
-  intersectionBanner.style.display = 'flex';
-  const poly = computeIntersectionPolygon();
-
-  if (!poly) {
-    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem interseção</strong>As áreas dos pins salvos não se sobrepõem.</p></div>`;
-    countBadge.style.display = 'none';
-    resultsTitle.textContent = 'Interseção';
+  if(pins.length===1){
+    ixBanner.style.display='none';
+    const p=pins[0];
+    const found=COUNTRIES
+      .map(c=>({...c,dist:haversine(p.coords.lat,p.coords.lng,c.lat,c.lng)}))
+      .filter(c=>c.dist>=p.minKm&&c.dist<=p.maxKm)
+      .sort((a,b)=>a.dist-b.dist);
+    renderSingleList(found,p.label,p.unit,p.color);
+    resTitle.textContent=p.label;
     return;
   }
 
-  // Draw the intersection polygon, highlighted
-  intersectionLayer = L.geoJSON(poly, {
-    style: {
-      color: '#1C1A17',
-      weight: 2.5,
-      fillColor: '#E8B400',
-      fillOpacity: 0.32,
-      dashArray: null
-    }
-  }).addTo(map);
-  intersectionLayer.bringToFront();
+  // 2+ pins — compute intersection
+  ixBanner.style.display='flex';
+  ixText.textContent=`Interseção de ${pins.length} pins`;
 
-  // Filter countries: must be inside EVERY pin's ring (min/max)
-  const found = COUNTRIES
-    .map(c => {
-      const dists = pins.map(p => Math.round(haversine(p.coords.lat, p.coords.lng, c.lat, c.lng)));
-      const inAll = pins.every((p, i) => dists[i] >= p.minKm && dists[i] <= p.maxKm);
-      return { ...c, dists, inAll, dist: Math.min(...dists) };
-    })
-    .filter(c => c.inAll)
-    .sort((a,b) => a.dist - b.dist);
+  // Find countries inside ALL rings simultaneously
+  const found=COUNTRIES.map(c=>{
+    const dists=pins.map(p=>haversine(p.coords.lat,p.coords.lng,c.lat,c.lng));
+    const inAll=pins.every((p,i)=>dists[i]>=p.minKm&&dists[i]<=p.maxKm);
+    return{...c,dists,inAll};
+  }).filter(c=>c.inAll).sort((a,b)=>a.dists[0]-b.dists[0]);
+
+  // Draw intersection polygon on map
+  const poly=computeIntersectionPolygon(pins);
+  if(poly&&poly.length>=3){
+    intersectionLayer=L.polygon(poly,{
+      color:'#1C1A17',weight:2.5,
+      fillColor:'#F0B429',fillOpacity:.38,
+      dashArray:null
+    }).addTo(map);
+    intersectionLayer.bringToFront();
+    try{map.fitBounds(intersectionLayer.getBounds(),{padding:[50,50]});}catch{}
+  }
 
   renderIntersectionList(found);
-  countBadge.textContent = found.length;
-  countBadge.style.display = found.length ? 'inline-block' : 'none';
-  resultsTitle.textContent = 'Interseção';
-  if (!found.length) showToast('Nenhum país na área de interseção.');
+  badge.textContent=found.length;
+  badge.style.display='inline-block';
+  resTitle.textContent='Interseção';
 
-  try {
-    map.fitBounds(intersectionLayer.getBounds(), { padding:[40,40] });
-  } catch {}
+  if(!found.length)toast('Nenhum país na área de interseção.');
 }
 
-function renderIntersectionList(countries) {
-  if (!countries.length) {
-    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Nenhum país cai na área comum entre os pins.</p></div>`;
-    return;
-  }
-  resultsList.innerHTML = countries.map(c => {
-    const distParts = pins.map((p, i) => {
-      const d = c.dists[i];
-      const dl = p.unit === 'mi' ? `${Math.round(d/1.60934)} mi` : `${d} km`;
-      return `<span style="color:${p.color}">●</span> ${dl}`;
-    }).join('  ');
-    return `<div class="country-item" onclick="focusCountryByCoords(${c.lat},${c.lng})" title="${c.name}">
+// ─── LIST RENDERERS ──────────────────────────────────────────────────────────
+function renderSingleList(countries,cityName,unit,color){
+  badge.textContent=countries.length;
+  badge.style.display=countries.length?'inline-block':'none';
+  if(!countries.length){showEmpty('Sem resultados','Tente ajustar a faixa de distância.');return;}
+  resList.innerHTML=countries.map(c=>{
+    const dl=unit==='mi'?`${Math.round(c.dist/1.60934).toLocaleString('pt-BR')} mi`:`${Math.round(c.dist).toLocaleString('pt-BR')} km`;
+    return`<div class="country-item" onclick="map.setView([${c.lat},${c.lng}],5)">
       <span class="flag">${c.flag}</span>
-      <div class="country-info">
-        <div class="country-name">${c.name}</div>
-        <div class="country-dist">${distParts}</div>
-      </div>
-      <span class="country-cont">${c.continent}</span>
+      <div class="ci"><div class="cname">${c.name}</div><div class="cdist">Capital: ${c.capital} · ${dl}</div></div>
+      <span class="ccont">${c.continent}</span>
     </div>`;
   }).join('');
 }
 
-function focusCountryByCoords(lat, lng) {
-  map.setView([lat, lng], 5, { animate: true });
-}
-
-function togglePins() {
-  const list = document.getElementById('pins-list');
-  const toggle = document.getElementById('pins-toggle');
-  list.classList.toggle('show');
-  toggle.classList.toggle('open');
-}
-
-// ── COUNTRY LIST RENDER ───────────────────────────────────────────
-function renderCountryList(countries, cityName, accentColor) {
-  if (!countries.length) {
-    resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg><p><strong>Sem resultados</strong>Tente aumentar a faixa ou escolher outra cidade.</p></div>`;
-    return;
-  }
-  const unit = unitSelect.value;
-  const activePin = activePinId ? pins.find(p => p.id === activePinId) : null;
-  const pinUnit = activePin ? activePin.unit : unit;
-  resultsList.innerHTML = countries.map((c) => {
-    const distLabel = pinUnit === 'mi'
-      ? `${Math.round(c.dist/1.60934).toLocaleString('pt-BR')} mi`
-      : `${c.dist.toLocaleString('pt-BR')} km`;
-    return `<div class="country-item" onclick="focusCountryByCoords(${c.lat},${c.lng})" title="${c.name}">
+function renderIntersectionList(countries){
+  if(!countries.length){showEmpty('Sem países na interseção','As áreas dos pins não têm países em comum.');return;}
+  resList.innerHTML=countries.map(c=>{
+    const distLine=pins.map((p,i)=>{
+      const d=c.dists[i], dl=p.unit==='mi'?`${Math.round(d/1.60934)} mi`:`${Math.round(d)} km`;
+      return`<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:8px;height:8px;border-radius:50%;background:${p.color};display:inline-block;flex-shrink:0"></span>${dl}</span>`;
+    }).join('<span style="color:var(--ink-f);margin:0 3px">·</span>');
+    return`<div class="country-item" onclick="map.setView([${c.lat},${c.lng}],5)">
       <span class="flag">${c.flag}</span>
-      <div class="country-info">
-        <div class="country-name">${c.name}</div>
-        <div class="country-dist">Capital: ${c.capital} · ${distLabel}</div>
-      </div>
-      <span class="country-cont">${c.continent}</span>
+      <div class="ci"><div class="cname">${c.name}</div><div class="cdist" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">${distLine}</div></div>
+      <span class="ccont">${c.continent}</span>
     </div>`;
   }).join('');
 }
 
-// ── RESET ─────────────────────────────────────────────────────────
-function resetMap() {
-  clearCurrentLayers();
-  clearIntersectionLayer();
-  intersectionMode = false;
-  intersectionBanner.style.display = 'none';
-  // Remove all pins from map
-  pins.forEach(p => {
-    map.removeLayer(p.mapLayers.marker);
-    map.removeLayer(p.mapLayers.circle);
-    if (p.mapLayers.innerCircle) map.removeLayer(p.mapLayers.innerCircle);
-    p.mapLayers.countryMarkers.forEach(m => map.removeLayer(m));
+function showEmpty(title,sub){
+  resList.innerHTML=`<div class="empty"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>${title}</strong>${sub}</p></div>`;
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function setSpinner(show,msg=''){
+  spinnerMsg.textContent=msg||'';
+  spinner.classList.toggle('show',show);
+}
+function toast(msg,dur=3000){
+  toastEl.textContent=msg; toastEl.classList.add('show');
+  setTimeout(()=>toastEl.classList.remove('show'),dur);
+}
+
+// ─── RESET ───────────────────────────────────────────────────────────────────
+function resetAll(){
+  clearPreview(); clearIntersection();
+  pins.forEach(p=>{
+    map.removeLayer(p.layers.marker);
+    map.removeLayer(p.layers.outerCircle);
+    if(p.layers.innerCircle)map.removeLayer(p.layers.innerCircle);
+    p.layers.countryMarkers.forEach(m=>map.removeLayer(m));
   });
-  pins = [];
-  activePinId = null;
-  originCoords = null;
-  cityInput.value = '';
-  radiusMin.value = '0';
-  radiusMax.value = '2000';
-  syncRangeHint();
-  resultsList.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 18 0A9 9 0 0 0 3 12"/><path d="M12 8v4l2 2"/><path d="M2 12h4M18 12h4M12 2v4M12 18v4"/></svg><p><strong>Nenhuma busca realizada</strong>Insira uma cidade e a faixa de distância para ver os países.</p></div>`;
-  countBadge.style.display = 'none';
-  resultsTitle.textContent = 'Resultados';
-  pinsSection.style.display = 'none';
-  map.setView([20, 0], 2);
+  pins=[]; originCoords=null;
+  cityInput.value=''; rMin.value='0'; rMax.value='2000'; syncHint();
+  ixBanner.style.display='none';
+  pinsSec.style.display='none';
+  showEmpty('Nenhuma busca ainda','Insira uma cidade, defina a faixa e salve pins.');
+  badge.style.display='none'; resTitle.textContent='Resultados';
+  map.setView([20,0],2);
 }
 
-// ── GLOBALS ───────────────────────────────────────────────────────
-window.doSearch = doSearch;
-window.savePin = savePin;
-window.focusPin = focusPin;
-window.removePin = removePin;
-window.togglePins = togglePins;
-window.resetMap = resetMap;
-window.focusCountryByCoords = focusCountryByCoords;
+// ─── GLOBALS ─────────────────────────────────────────────────────────────────
+window.doSearch=doSearch;
+window.savePin=savePin;
+window.focusPin=focusPin;
+window.removePin=removePin;
+window.togglePins=togglePins;
+window.resetAll=resetAll;
 </script>
 </body>
 </html>
