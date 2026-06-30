@@ -624,32 +624,33 @@ function inRing(lat, lng, pin) {
   return d >= pin.minKm && d <= pin.maxKm;
 }
 
-// Build intersection polygon: sample boundary points of all circles, keep those inside all other rings
-function buildIntersectionPolygon() {
-  if (pins.length < 2) return null;
-  const STEPS = 360;
-  let pts = [];
+// Build intersection highlight as a grid of small filled cells (raster approach).
+// Robust against any shape: disjoint regions, concave areas, annuli, etc.
+// Always scans the full world grid at fixed resolution — this avoids degenerate
+// bounding-box math when maxKm approaches Earth's diameter (~20,000km) or when
+// pins sit near the poles / wrap around the antimeridian.
+function buildIntersectionCells() {
+  if (pins.length < 2) return [];
 
-  pins.forEach((p, pi) => {
-    // Sample outer boundary
-    geodesicCircle(p.coords.lat, p.coords.lng, p.maxKm, STEPS).forEach(pt => {
-      if (pins.every((q, qi) => qi === pi || inRing(pt[0], pt[1], q))) pts.push(pt);
-    });
-    // Sample inner boundary (exclusion ring edge)
-    if (p.minKm > 0) {
-      geodesicCircle(p.coords.lat, p.coords.lng, p.minKm, STEPS).forEach(pt => {
-        if (pins.every((q, qi) => qi === pi || inRing(pt[0], pt[1], q))) pts.push(pt);
-      });
+  const minLat = -85, maxLat = 85, minLng = -180, maxLng = 180;
+  const LAT_STEPS = 90, LNG_STEPS = 180; // ~2° cells: fast and visually smooth
+  const latStep = (maxLat - minLat) / LAT_STEPS;
+  const lngStep = (maxLng - minLng) / LNG_STEPS;
+
+  const cells = [];
+  for (let i = 0; i < LAT_STEPS; i++) {
+    const la = minLat + i * latStep;
+    const cLat = la + latStep / 2;
+    for (let j = 0; j < LNG_STEPS; j++) {
+      const lo = minLng + j * lngStep;
+      const cLng = lo + lngStep / 2;
+      const inAll = pins.every(p => inRing(cLat, cLng, p));
+      if (inAll) {
+        cells.push([[la, lo], [la, lo+lngStep], [la+latStep, lo+lngStep], [la+latStep, lo]]);
+      }
     }
-  });
-
-  if (pts.length < 3) return null;
-
-  // Sort by angle around centroid to form a valid polygon
-  const cLat = pts.reduce((s,p) => s+p[0], 0) / pts.length;
-  const cLng = pts.reduce((s,p) => s+p[1], 0) / pts.length;
-  pts.sort((a, b) => Math.atan2(a[1]-cLng, a[0]-cLat) - Math.atan2(b[1]-cLng, b[0]-cLat));
-  return pts;
+  }
+  return cells;
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -834,14 +835,21 @@ function updateIntersection() {
     return { ...c, dists, inAll };
   }).filter(c => c.inAll).sort((a,b) => a.dists[0] - b.dists[0]);
 
-  // Draw intersection polygon
-  const poly = buildIntersectionPolygon();
-  if (poly && poly.length >= 3) {
-    intersectionLayer = L.polygon(poly, {
-      color: '#92610A', weight: 2, fillColor: '#F0B429', fillOpacity: 0.35
-    }).addTo(map);
-    intersectionLayer.bringToFront();
-    try { map.fitBounds(intersectionLayer.getBounds(), { padding: [50,50] }); } catch {}
+  // Draw intersection as a raster grid (robust against any shape/disjoint regions)
+  const cells = buildIntersectionCells();
+  if (cells.length) {
+    intersectionLayer = L.layerGroup(
+      cells.map(cell => L.polygon(cell, {
+        stroke: false, fillColor: '#F0B429', fillOpacity: 0.55
+      }))
+    ).addTo(map);
+    try {
+      const allLatLngs = cells.flat();
+      const bounds = L.latLngBounds(allLatLngs);
+      map.fitBounds(bounds, { padding: [50,50] });
+    } catch {}
+  } else {
+    toast('As áreas dos pins não se sobrepõem.');
   }
 
   renderIntersectionList(found);
